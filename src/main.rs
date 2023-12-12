@@ -45,10 +45,10 @@ impl std::fmt::Debug for Inst {
             AddressingMode::AbsoluteY => {
                 write!(f, "{} ${:#04x}, Y", self.name, self.param.unwrap())
             }
-            AddressingMode::IndirectX => {
+            AddressingMode::IndexedIndirect => {
                 write!(f, "{} (${:#02x}, X)", self.name, self.param.unwrap())
             }
-            AddressingMode::IndirectY => {
+            AddressingMode::IndirectIndexed => {
                 write!(f, "{} (${:#02x}), Y", self.name, self.param.unwrap())
             }
         }
@@ -64,8 +64,8 @@ enum AddressingMode {
     Absolute,
     AbsoluteX,
     AbsoluteY,
-    IndirectX,
-    IndirectY,
+    IndexedIndirect,
+    IndirectIndexed,
 }
 
 fn read_param(mode: AddressingMode, iter: &mut std::slice::Iter<u8>) -> Option<u16> {
@@ -74,8 +74,8 @@ fn read_param(mode: AddressingMode, iter: &mut std::slice::Iter<u8>) -> Option<u
         AddressingMode::Immediate
         | AddressingMode::ZeroPage
         | AddressingMode::ZeroPageX
-        | AddressingMode::IndirectX
-        | AddressingMode::IndirectY => Some(*iter.next().unwrap() as u16),
+        | AddressingMode::IndexedIndirect
+        | AddressingMode::IndirectIndexed => Some(*iter.next().unwrap() as u16),
         AddressingMode::Absolute | AddressingMode::AbsoluteX | AddressingMode::AbsoluteY => {
             let lsb: u16 = *iter.next().unwrap() as u16;
             let msb: u16 = *iter.next().unwrap() as u16;
@@ -104,19 +104,19 @@ fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
         AddressingMode::Absolute => cpu.mem[param as usize],
         AddressingMode::AbsoluteX => cpu.mem[(param + cpu.X as u16) as usize],
         AddressingMode::AbsoluteY => cpu.mem[(param + cpu.Y as u16) as usize],
-        AddressingMode::IndirectX => {
+        AddressingMode::IndexedIndirect => {
             assert!(param <= 0xff);
             let addr = cpu.mem[(cpu.X as u16 + param) as usize] as usize;
             let lsb = cpu.mem[addr] as u16;
             let msb = cpu.mem[addr + 1] as u16;
             cpu.mem[((msb << 8) + lsb) as usize]
         }
-        AddressingMode::IndirectY => {
+        AddressingMode::IndirectIndexed => {
             assert!(param <= 0xff);
-            let addr = cpu.mem[(cpu.Y as u16 + param) as usize] as usize;
+            let addr = cpu.mem[param as usize] as usize;
             let lsb = cpu.mem[addr] as u16;
             let msb = cpu.mem[addr + 1] as u16;
-            cpu.mem[((msb << 8) + lsb) as usize]
+            cpu.mem[((msb << 8) + lsb) as usize] + cpu.Y
         }
     }
 }
@@ -184,8 +184,8 @@ fn main() {
         (0x0D, AddressingMode::Absolute),
         (0x1D, AddressingMode::AbsoluteX),
         (0x19, AddressingMode::AbsoluteY),
-        (0x01, AddressingMode::IndirectX),
-        (0x11, AddressingMode::IndirectY),
+        (0x01, AddressingMode::IndexedIndirect),
+        (0x11, AddressingMode::IndirectIndexed),
     ] {
         inst_factory_by_op_code.insert(opcode, InstFunction { mode, f: make_lda });
     }
