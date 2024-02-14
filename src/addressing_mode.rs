@@ -52,16 +52,14 @@ pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
         AddressingMode::IndexedIndirect => {
             assert!(param <= 0xff);
             let addr = (cpu.X.wrapping_add(param as u8)) as usize;
-            let lsb = cpu.mem[addr] as u16;
-            let msb = cpu.mem[addr + 1] as u16;
-            cpu.mem[((msb << 8) + lsb) as usize]
+            let addr = cpu.get_mem16(addr) as usize;
+            cpu.mem[addr]
         }
         AddressingMode::IndirectIndexed => {
             assert!(param <= 0xff);
             let addr = param as usize;
-            let lsb = cpu.mem[addr] as u16;
-            let msb = cpu.mem[addr + 1] as u16;
-            cpu.mem[((msb << 8) + lsb) as usize].wrapping_add(cpu.Y)
+            let addr = cpu.get_mem16(addr) as usize;
+            cpu.mem[addr].wrapping_add(cpu.Y)
         }
     }
 }

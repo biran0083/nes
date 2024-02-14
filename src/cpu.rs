@@ -39,6 +39,28 @@ impl CPU {
         }
     }
 
+    pub fn reset(&mut self) {
+        self.X = 0;
+        self.Y = 0;
+        self.Y = 0;
+        self.SP = 0;
+        self.flags = Flags::default();
+        self.PC = self.get_mem16(0xFFFC);
+    }
+
+    pub fn set_mem16(&mut self, addr: usize, value: u16) {
+        let lsb = (value & 0xff) as u8;
+        let msb = (value >> 8) as u8;
+        self.mem[addr] = lsb;
+        self.mem[addr + 1] = msb;
+    }
+
+    pub fn get_mem16(&self, addr: usize) -> u16 {
+        let lsb = self.mem[addr] as u16;
+        let msb = self.mem[addr + 1] as u16;
+        (msb << 8) + lsb
+    }
+
     pub fn update_z(&mut self) {
         self.flags.Z = if self.A == 0 { 1 } else { 0 };
     }
@@ -51,6 +73,7 @@ impl CPU {
         assert!(bytes.len() < 0x8000);
         let start: usize = 0x8000;
         self.PC = start as u16;
+        self.set_mem16(0xFFFC, start as u16);
         self.mem[start..(start + bytes.len())].copy_from_slice(bytes);
     }
 
@@ -65,6 +88,14 @@ impl CPU {
     pub fn run_once(&mut self) {
         let ins = self.decode();
         ins.run(self);
+    }
+
+    pub fn load_and_run(&mut self, bytes: &[u8]) {
+        self.load_program(bytes);
+        self.reset();
+        loop {
+            self.run_once();
+        }
     }
 }
 
@@ -102,7 +133,7 @@ mod test {
             self
         }
 
-        fn set_memory(&mut self, addr: usize, value: u8) {
+        fn set_mem(&mut self, addr: usize, value: u8) {
             self.cpu.mem[addr] = value;
         }
 
@@ -117,12 +148,13 @@ mod test {
             }
         }
 
-        fn test(&mut self, bytes: &[u8], rs: &[u16], fs: &[u8]) {
-            assert_eq!(rs.len(), self.registers.len());
-            assert_eq!(fs.len(), self.flags.len());
-            self.cpu.load_program(bytes);
+        fn test(&mut self, inst: &[u8], registers: &[u16], flags: &[u8]) {
+            assert_eq!(registers.len(), self.registers.len());
+            assert_eq!(flags.len(), self.flags.len());
+            self.cpu.load_program(inst);
+            self.cpu.PC = self.cpu.get_mem16(0xFFFC);
             self.cpu.run_once();
-            for (name, r) in zip(self.registers.iter(), rs.iter()) {
+            for (name, r) in zip(self.registers.iter(), registers.iter()) {
                 match name.as_ref() {
                     "X" => assert_eq!(self.cpu.X, *r as u8),
                     "Y" => assert_eq!(self.cpu.Y, *r as u8),
@@ -132,7 +164,7 @@ mod test {
                     _ => panic!("unknown register {name}"),
                 }
             }
-            for (name, f) in zip(self.flags.iter(), fs.iter()) {
+            for (name, f) in zip(self.flags.iter(), flags.iter()) {
                 match name.as_ref() {
                     "C" => assert_eq!(self.cpu.flags.C, *f),
                     "Z" => assert_eq!(self.cpu.flags.Z, *f),
@@ -158,41 +190,41 @@ mod test {
         runner.test(&[0xA9, 0x91], &[0x91], &[0, 1]);
         // Zero Page
         runner.test(&[0xA5, 0x01], &[0], &[1, 0]);
-        runner.set_memory(0x01, 10);
+        runner.set_mem(0x01, 10);
         runner.test(&[0xA5, 0x01], &[10], &[0, 0]);
-        runner.set_memory(0x01, 0xff);
+        runner.set_mem(0x01, 0xff);
         runner.test(&[0xA5, 0x01], &[0xff], &[0, 1]);
         // Zero Page X
-        runner.set_memory(0x01, 0x00);
+        runner.set_mem(0x01, 0x00);
         runner.test(&[0xB5, 0x01], &[0], &[1, 0]);
         runner.set_register("X", 2);
-        runner.set_memory(0x03, 10);
+        runner.set_mem(0x03, 10);
         runner.test(&[0xB5, 0x01], &[10], &[0, 0]);
         runner.set_register("X", 0x80);
-        runner.set_memory(0x7f, 0xff);
+        runner.set_mem(0x7f, 0xff);
         runner.test(&[0xB5, 0xff], &[0xff], &[0, 1]);
         // Absolute
-        runner.set_memory(0x1234, 0x11);
+        runner.set_mem(0x1234, 0x11);
         runner.test(&[0xAD, 0x34, 0x12], &[0x11], &[0, 0]);
         // Absolute X
-        runner.set_memory(0x1235, 0xf0);
+        runner.set_mem(0x1235, 0xf0);
         runner.set_register("X", 1);
         runner.test(&[0xBD, 0x34, 0x12], &[0xf0], &[0, 1]);
         // Absolute Y
-        runner.set_memory(0x1236, 0x13);
+        runner.set_mem(0x1236, 0x13);
         runner.set_register("Y", 2);
         runner.test(&[0xB9, 0x34, 0x12], &[0x13], &[0, 0]);
         // (Indirect,X)
         runner.set_register("X", 0x11);
-        runner.set_memory(0x21, 0x12);
-        runner.set_memory(0x22, 0x34);
-        runner.set_memory(0x3412, 0x56);
+        runner.set_mem(0x21, 0x12);
+        runner.set_mem(0x22, 0x34);
+        runner.set_mem(0x3412, 0x56);
         runner.test(&[0xA1, 0x10], &[0x56], &[0, 0]);
         // (Indirect,Y)
         runner.set_register("Y", 0x0f);
-        runner.set_memory(0x10, 0x45);
-        runner.set_memory(0x11, 0x23);
-        runner.set_memory(0x2345, 0xff);
+        runner.set_mem(0x10, 0x45);
+        runner.set_mem(0x11, 0x23);
+        runner.set_mem(0x2345, 0xff);
         runner.test(&[0xB1, 0x10], &[0x0e], &[0, 0]);
     }
 
