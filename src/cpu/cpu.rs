@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use crate::instructions::{make_inst_factories_by_op_code, Inst, InstFactory};
+use crate::instructions::{Inst, INST_FACTORIES};
 
 #[derive(Default)]
 pub struct Flags {
@@ -86,7 +84,6 @@ pub struct CPU {
     pub PC: u16,
     pub flags: Flags,
     pub mem: Vec<u8>,
-    inst_factories: HashMap<u8, InstFactory>,
 }
 
 impl CPU {
@@ -99,7 +96,6 @@ impl CPU {
             PC: 0,
             flags: Flags::default(),
             mem: vec![0; 0x10000],
-            inst_factories: make_inst_factories_by_op_code(),
         }
     }
 
@@ -143,7 +139,7 @@ impl CPU {
 
     fn decode(&mut self) -> Inst {
         let op = self.mem[self.PC as usize];
-        self.inst_factories
+        INST_FACTORIES
             .get(&op)
             .unwrap()
             .make(&self.mem[((self.PC + 1) as usize)..])

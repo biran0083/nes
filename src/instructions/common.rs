@@ -73,11 +73,11 @@ impl InstFactory {
 
 struct InstructionInfo {
     f: InstFactoryFun,
-    opcode_to_addressing_mode: Vec<(u8, AddressingMode)>,
+    opcode_to_addressing_mode: &'static[(u8, AddressingMode)],
 }
 
 impl InstructionInfo {
-    pub fn new(f: InstFactoryFun, opcode_to_addressing_mode: Vec<(u8, AddressingMode)>) -> Self {
+    pub fn new(f: InstFactoryFun, opcode_to_addressing_mode: &'static[(u8, AddressingMode)]) -> Self {
         InstructionInfo {
             f,
             opcode_to_addressing_mode,
@@ -86,39 +86,19 @@ impl InstructionInfo {
 }
 
 lazy_static! {
-static ref INSTRUCTINOSS: Vec<InstructionInfo> = vec![
-    InstructionInfo::new(
-        crate::instructions::lda::make,
-        vec![
-            (0xA9, AddressingMode::Immediate),
-            (0xA5, AddressingMode::ZeroPage),
-            (0xB5, AddressingMode::ZeroPageX),
-            (0xAD, AddressingMode::Absolute),
-            (0xBD, AddressingMode::AbsoluteX),
-            (0xB9, AddressingMode::AbsoluteY),
-            (0xA1, AddressingMode::IndexedIndirect),
-            (0xB1, AddressingMode::IndirectIndexed),
-        ]),
-    InstructionInfo::new(crate::instructions::tax::make, vec![(0xaa, AddressingMode::Implied)]),
-    InstructionInfo::new(crate::instructions::idx::make, vec![(0xe8, AddressingMode::Implied)]),
-    InstructionInfo::new(crate::instructions::brk::make, vec![(0x00, AddressingMode::Implied)]),
-    InstructionInfo::new(crate::instructions::adc::make, vec![
-        (0x69, AddressingMode::Immediate),
-        (0x65, AddressingMode::ZeroPage),
-        (0x75, AddressingMode::ZeroPageX),
-        (0x6D, AddressingMode::Absolute),
-        (0x7D, AddressingMode::AbsoluteX),
-        (0x79, AddressingMode::AbsoluteY),
-        (0x61, AddressingMode::IndexedIndirect),
-        (0x71, AddressingMode::IndirectIndexed),
-    ]),
-];
-}
-
-pub fn make_inst_factories_by_op_code() -> HashMap<u8, InstFactory> {
+pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
+    let instructions = &[
+        InstructionInfo::new(
+            crate::instructions::lda::make,
+            crate::instructions::lda::OPCODE_MAP),
+        InstructionInfo::new(crate::instructions::tax::make, crate::instructions::tax::OPCODE_MAP),
+        InstructionInfo::new(crate::instructions::idx::make, crate::instructions::idx::OPCODE_MAP),
+        InstructionInfo::new(crate::instructions::brk::make, crate::instructions::brk::OPCODE_MAP),
+        InstructionInfo::new(crate::instructions::adc::make, crate::instructions::adc::OPCODE_MAP),
+    ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
-    for info in INSTRUCTINOSS.iter() {
-        for (op, mode) in &info.opcode_to_addressing_mode {
+    for info in instructions.iter() {
+        for (op, mode) in info.opcode_to_addressing_mode {
             inst_factory_by_op_code.insert(
                 *op,
                 InstFactory {
@@ -129,15 +109,15 @@ pub fn make_inst_factories_by_op_code() -> HashMap<u8, InstFactory> {
         }
     }
     inst_factory_by_op_code
+};
 }
 
 pub fn disassemble(bytes: &[u8]) -> Vec<Inst> {
-    let inst_factory_by_op_code = make_inst_factories_by_op_code();
     let mut res = vec![];
     let mut idx = 0;
     while idx < bytes.len() {
         let op = bytes[idx];
-        if let Some(factory) = inst_factory_by_op_code.get(&op) {
+        if let Some(factory) = INST_FACTORIES.get(&op) {
             let inst = factory.make(&bytes[(idx + 1)..]);
             idx += inst.len() as usize;
             res.push(inst);

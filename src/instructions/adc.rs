@@ -20,6 +20,17 @@ pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
     }
 }
 
+pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
+        (0x69, AddressingMode::Immediate),
+        (0x65, AddressingMode::ZeroPage),
+        (0x75, AddressingMode::ZeroPageX),
+        (0x6D, AddressingMode::Absolute),
+        (0x7D, AddressingMode::AbsoluteX),
+        (0x79, AddressingMode::AbsoluteY),
+        (0x61, AddressingMode::IndexedIndirect),
+        (0x71, AddressingMode::IndirectIndexed),
+    ];
+
 #[cfg(test)]
 mod test {
     use crate::cpu::test_util::TestRunner;

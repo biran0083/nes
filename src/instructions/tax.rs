@@ -16,6 +16,8 @@ pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
     }
 }
 
+pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[(0xaa, AddressingMode::Implied)];
+
 #[cfg(test)]
 mod test {
     use crate::cpu::test_util::TestRunner;

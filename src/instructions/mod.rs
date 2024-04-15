@@ -4,4 +4,4 @@ mod tax;
 mod adc;
 mod idx;
 mod brk;
-pub use common::{make_inst_factories_by_op_code, Inst, InstFactory, disassemble};
+pub use common::{Inst, INST_FACTORIES, disassemble};

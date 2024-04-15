@@ -15,3 +15,5 @@ pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
         },
     }
 }
+
+pub const OPCODE_MAP: &[(u8, AddressingMode)] =  &[(0xe8, AddressingMode::Implied)];
