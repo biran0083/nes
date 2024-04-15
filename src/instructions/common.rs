@@ -85,16 +85,23 @@ impl InstructionInfo {
     }
 }
 
+macro_rules! instruction_info {
+    ($module:ident) => {
+        InstructionInfo::new(
+            crate::instructions::$module::make,
+            crate::instructions::$module::OPCODE_MAP
+        )
+    };
+}
+
 lazy_static! {
 pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
-        InstructionInfo::new(
-            crate::instructions::lda::make,
-            crate::instructions::lda::OPCODE_MAP),
-        InstructionInfo::new(crate::instructions::tax::make, crate::instructions::tax::OPCODE_MAP),
-        InstructionInfo::new(crate::instructions::idx::make, crate::instructions::idx::OPCODE_MAP),
-        InstructionInfo::new(crate::instructions::brk::make, crate::instructions::brk::OPCODE_MAP),
-        InstructionInfo::new(crate::instructions::adc::make, crate::instructions::adc::OPCODE_MAP),
+        instruction_info!(lda),
+        instruction_info!(tax),
+        instruction_info!(idx),
+        instruction_info!(brk),
+        instruction_info!(adc),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {
