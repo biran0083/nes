@@ -4,13 +4,77 @@ use crate::instructions::{make_inst_factories_by_op_code, Inst, InstFactory};
 
 #[derive(Default)]
 pub struct Flags {
-    pub C: u8,
-    pub Z: u8,
-    pub I: u8,
-    pub D: u8,
-    pub B: u8,
-    pub V: u8,
-    pub N: u8,
+    pub value: u8,
+}
+
+impl Flags {
+    fn get_bit(&self, n: u8) -> bool {
+        self.value & (1 << n) != 0
+    }
+
+    fn set_bit(&mut self, n: u8, v: bool) {
+        if v {
+            self.value |= 1 << n;
+        } else {
+            self.value &= !(1 << n);
+        }
+    }
+
+    pub fn c(&self) -> bool {
+        self.get_bit(0)
+    }
+
+    pub fn set_c(&mut self, c: bool) {
+        self.set_bit(0, c)
+    }
+
+    pub fn z(&self) -> bool {
+        self.get_bit(1)
+    }
+
+    pub fn set_z(&mut self, c: bool) {
+        self.set_bit(1, c)
+    }
+
+    pub fn i(&self) -> bool {
+        self.get_bit(2)
+    }
+
+    pub fn set_i(&mut self, i: bool) {
+        self.set_bit(2, i)
+    }
+
+    pub fn d(&self) -> bool {
+        self.get_bit(3)
+    }
+
+    pub fn set_d(&mut self, d: bool) {
+        self.set_bit(3, d)
+    }
+
+    pub fn b(&self) -> bool {
+        self.get_bit(4)
+    }
+
+    pub fn set_b(&mut self, b: bool) {
+        self.set_bit(4, b)
+    }
+
+    pub fn v(&self) -> bool {
+        self.get_bit(5)
+    }
+
+    pub fn set_v(&mut self, v: bool) {
+        self.set_bit(5, v)
+    }
+
+    pub fn n(&self) -> bool {
+        self.get_bit(6)
+    }
+
+    pub fn set_n(&mut self, n: bool) {
+        self.set_bit(6, n)
+    }
 }
 
 pub struct CPU {
@@ -62,11 +126,11 @@ impl CPU {
     }
 
     pub fn update_z(&mut self) {
-        self.flags.Z = if self.A == 0 { 1 } else { 0 };
+        self.flags.set_z(self.A == 0);
     }
 
     pub fn update_n(&mut self) {
-        self.flags.N = if self.A & 0x80 != 0 { 1 } else { 0 };
+        self.flags.set_n(self.A & 0x80 != 0);
     }
 
     pub fn load_program(&mut self, bytes: &[u8]) {

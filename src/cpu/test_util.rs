@@ -47,15 +47,15 @@ impl TestRunner {
     }
 
     pub fn set_flag(&mut self, name: &str, v: u8) {
-        assert!(v == 0 || v == 1);
+        let v = if v == 0 { false} else {true};
         match name {
-            "C" => self.cpu.flags.C = v,
-            "Z" => self.cpu.flags.Z = v,
-            "I" => self.cpu.flags.I = v,
-            "D" => self.cpu.flags.D = v,
-            "B" => self.cpu.flags.B = v,
-            "V" => self.cpu.flags.V = v,
-            "N" => self.cpu.flags.N = v,
+            "C" => self.cpu.flags.set_c(v),
+            "Z" => self.cpu.flags.set_z(v),
+            "I" => self.cpu.flags.set_i(v),
+            "D" => self.cpu.flags.set_d(v),
+            "B" => self.cpu.flags.set_b(v),
+            "V" => self.cpu.flags.set_v(v),
+            "N" => self.cpu.flags.set_n(v),
             _ => panic!("unknown flag {name}"),
         }
     }
@@ -63,6 +63,7 @@ impl TestRunner {
     pub fn test(&mut self, inst: &[u8], registers: &[u16], flags: &[u8]) {
         assert_eq!(registers.len(), self.registers.len());
         assert_eq!(flags.len(), self.flags.len());
+        let flags : Vec<bool> = flags.iter().map(|v| *v != 0).collect();
         self.cpu.load_program(inst);
         self.cpu.PC = self.cpu.get_mem16(0xFFFC);
         self.cpu.run_once();
@@ -78,13 +79,13 @@ impl TestRunner {
         }
         for (name, f) in zip(self.flags.iter(), flags.iter()) {
             match name.as_ref() {
-                "C" => assert_eq!(self.cpu.flags.C, *f),
-                "Z" => assert_eq!(self.cpu.flags.Z, *f),
-                "I" => assert_eq!(self.cpu.flags.I, *f),
-                "D" => assert_eq!(self.cpu.flags.D, *f),
-                "B" => assert_eq!(self.cpu.flags.B, *f),
-                "V" => assert_eq!(self.cpu.flags.V, *f),
-                "N" => assert_eq!(self.cpu.flags.N, *f),
+                "C" => assert_eq!(self.cpu.flags.c(), *f),
+                "Z" => assert_eq!(self.cpu.flags.z(), *f),
+                "I" => assert_eq!(self.cpu.flags.i(), *f),
+                "D" => assert_eq!(self.cpu.flags.d(), *f),
+                "B" => assert_eq!(self.cpu.flags.b(), *f),
+                "V" => assert_eq!(self.cpu.flags.v(), *f),
+                "N" => assert_eq!(self.cpu.flags.n(), *f),
                 _ => panic!("unknown flag {name}"),
             }
         }
