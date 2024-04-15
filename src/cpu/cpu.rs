@@ -125,12 +125,12 @@ impl CPU {
         (msb << 8) + lsb
     }
 
-    pub fn update_z(&mut self) {
-        self.flags.set_z(self.A == 0);
+    pub fn update_z(&mut self, value: u8) {
+        self.flags.set_z(value == 0);
     }
 
-    pub fn update_n(&mut self) {
-        self.flags.set_n(self.A & 0x80 != 0);
+    pub fn update_n(&mut self, value: u8) {
+        self.flags.set_n(value & 0x80 != 0);
     }
 
     pub fn load_program(&mut self, bytes: &[u8]) {

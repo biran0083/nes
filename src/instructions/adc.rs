@@ -13,8 +13,8 @@ pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
             cpu.flags.set_c((result16 >> 8) & 1 != 0);
             cpu.flags.set_v((cpu.A ^ result) & (operand ^ result) & 0x80 != 0);
             cpu.A = result;
-            cpu.update_z();
-            cpu.update_n();
+            cpu.update_z(cpu.A);
+            cpu.update_n(cpu.A);
             cpu.PC += ins.len();
         },
     }
