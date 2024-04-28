@@ -8,14 +8,14 @@ pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
         mode,
         f: move |ins, cpu| {
             let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
-            let result16 = cpu.A as u16 + operand as u16 + cpu.flags.c() as u16;
+            let result16 = cpu.a as u16 + operand as u16 + cpu.flags.c() as u16;
             let result = result16 as u8;
             cpu.flags.set_c((result16 >> 8) & 1 != 0);
-            cpu.flags.set_v((cpu.A ^ result) & (operand ^ result) & 0x80 != 0);
-            cpu.A = result;
-            cpu.update_z(cpu.A);
-            cpu.update_n(cpu.A);
-            cpu.PC += ins.len();
+            cpu.flags.set_v((cpu.a ^ result) & (operand ^ result) & 0x80 != 0);
+            cpu.a = result;
+            cpu.update_z(cpu.a);
+            cpu.update_n(cpu.a);
+            cpu.pc += ins.len();
         },
     }
 }

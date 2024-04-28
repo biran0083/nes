@@ -8,10 +8,10 @@ pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
         param: read_param(mode, bytes),
         mode,
         f: move |ins, cpu| {
-            cpu.X = cpu.A;
-            cpu.update_z(cpu.X);
-            cpu.update_n(cpu.X);
-            cpu.PC += ins.len();
+            cpu.x = cpu.a;
+            cpu.update_z(cpu.x);
+            cpu.update_n(cpu.x);
+            cpu.pc += ins.len();
         },
     }
 }

@@ -77,11 +77,11 @@ impl Flags {
 
 pub struct CPU {
     // registers
-    pub X: u8,
-    pub Y: u8,
-    pub A: u8,
-    pub SP: u16,
-    pub PC: u16,
+    pub x: u8,
+    pub y: u8,
+    pub a: u8,
+    pub sp: u16,
+    pub pc: u16,
     pub flags: Flags,
     pub mem: Vec<u8>,
 }
@@ -89,23 +89,23 @@ pub struct CPU {
 impl CPU {
     pub fn new() -> Self {
         Self {
-            X: 0,
-            Y: 0,
-            A: 0,
-            SP: 0,
-            PC: 0,
+            x: 0,
+            y: 0,
+            a: 0,
+            sp: 0,
+            pc: 0,
             flags: Flags::default(),
             mem: vec![0; 0x10000],
         }
     }
 
     pub fn reset(&mut self) {
-        self.X = 0;
-        self.Y = 0;
-        self.Y = 0;
-        self.SP = 0x01ff;
+        self.x = 0;
+        self.y = 0;
+        self.y = 0;
+        self.sp = 0x01ff;
         self.flags = Flags::default();
-        self.PC = self.get_mem16(0xFFFC);
+        self.pc = self.get_mem16(0xFFFC);
     }
 
     pub fn set_mem16(&mut self, addr: usize, value: u16) {
@@ -132,17 +132,17 @@ impl CPU {
     pub fn load_program(&mut self, bytes: &[u8]) {
         assert!(bytes.len() < 0x8000);
         let start: usize = 0x8000;
-        self.PC = start as u16;
+        self.pc = start as u16;
         self.set_mem16(0xFFFC, start as u16);
         self.mem[start..(start + bytes.len())].copy_from_slice(bytes);
     }
 
     fn decode(&mut self) -> Inst {
-        let op = self.mem[self.PC as usize];
+        let op = self.mem[self.pc as usize];
         INST_FACTORIES
             .get(&op)
             .unwrap()
-            .make(&self.mem[((self.PC + 1) as usize)..])
+            .make(&self.mem[((self.pc + 1) as usize)..])
     }
 
     pub fn run_once(&mut self) {
@@ -159,8 +159,8 @@ impl CPU {
     }
 
     pub fn push8(&mut self, value: u8) {
-        self.mem[self.SP as usize] = value;
-        self.SP -= 1;
+        self.mem[self.sp as usize] = value;
+        self.sp -= 1;
     }
 
     pub fn push16(&mut self, value: u16) {
@@ -171,8 +171,8 @@ impl CPU {
     }
 
     pub fn pop8(&mut self) -> u8 {
-        self.SP += 1;
-        self.mem[self.SP as usize]
+        self.sp += 1;
+        self.mem[self.sp as usize]
     }
 
     pub fn pop16(&mut self) -> u16 {

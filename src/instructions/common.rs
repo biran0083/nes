@@ -99,7 +99,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
         instruction_info!(lda),
         instruction_info!(tax),
-        instruction_info!(idx),
+        instruction_info!(inx),
         instruction_info!(brk),
         instruction_info!(adc),
     ];

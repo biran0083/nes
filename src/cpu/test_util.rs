@@ -37,11 +37,11 @@ impl TestRunner {
 
     pub fn set_register(&mut self, name: &str, value: u16) {
         match name {
-            "X" => self.cpu.X = value as u8,
-            "Y" => self.cpu.Y = value as u8,
-            "A" => self.cpu.A = value as u8,
-            "SP" => self.cpu.SP = value as u16,
-            "PC" => self.cpu.PC = value,
+            "X" => self.cpu.x = value as u8,
+            "Y" => self.cpu.y = value as u8,
+            "A" => self.cpu.a = value as u8,
+            "SP" => self.cpu.sp = value as u16,
+            "PC" => self.cpu.pc = value,
             _ => panic!("unknown register {name}"),
         }
     }
@@ -65,15 +65,15 @@ impl TestRunner {
         assert_eq!(flags.len(), self.flags.len());
         let flags : Vec<bool> = flags.iter().map(|v| *v != 0).collect();
         self.cpu.load_program(inst);
-        self.cpu.PC = self.cpu.get_mem16(0xFFFC);
+        self.cpu.pc = self.cpu.get_mem16(0xFFFC);
         self.cpu.run_once();
         for (name, r) in zip(self.registers.iter(), registers.iter()) {
             match name.as_ref() {
-                "X" => assert_eq!(self.cpu.X, *r as u8),
-                "Y" => assert_eq!(self.cpu.Y, *r as u8),
-                "A" => assert_eq!(self.cpu.A, *r as u8),
-                "SP" => assert_eq!(self.cpu.SP, *r as u16),
-                "PC" => assert_eq!(self.cpu.PC, *r),
+                "X" => assert_eq!(self.cpu.x, *r as u8),
+                "Y" => assert_eq!(self.cpu.y, *r as u8),
+                "A" => assert_eq!(self.cpu.a, *r as u8),
+                "SP" => assert_eq!(self.cpu.sp, *r as u16),
+                "PC" => assert_eq!(self.cpu.pc, *r),
                 _ => panic!("unknown register {name}"),
             }
         }
