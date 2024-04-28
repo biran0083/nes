@@ -30,54 +30,125 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
 #[cfg(test)]
 mod test {
     use crate::cpu::test_util::TestRunner;
+    use crate::cpu::test_util::Register8::*;
+    use crate::cpu::test_util::Flag::*;
 
     #[test]
-    fn test_lda() {
-        // Immediate
-        let mut runner = TestRunner::new()
-            .verify_registers(&["A"])
-            .verify_flags(&["Z", "N"]);
-        runner.test(&[0xA9, 0x00], &[0], &[1, 0]);
-        runner.test(&[0xA9, 0x01], &[0x01], &[0, 0]);
-        runner.test(&[0xA9, 0x91], &[0x91], &[0, 1]);
-        // Zero Page
-        runner.test(&[0xA5, 0x01], &[0], &[1, 0]);
+    fn test_lda_immediate() {
+        let mut runner = TestRunner::new();
+        runner.test(&[0xA9, 0x00])
+            .verify(A, 0)
+            .verify(Z, true)
+            .verify(N, false);
+        runner.test(&[0xA9, 0x01])
+            .verify(A, 1)
+            .verify(Z, false)
+            .verify(N, false);
+        runner.test(&[0xA9, 0x91])
+            .verify(A, 0x91)
+            .verify(Z, false)
+            .verify(N, true);
+    }
+
+    #[test]
+    fn test_lda_zero_page() {
+        let mut runner = TestRunner::new();
+        runner.test(&[0xA5, 0x01])
+            .verify(A, 0)
+            .verify(Z, true)
+            .verify(N, false);
         runner.set_mem(0x01, 10);
-        runner.test(&[0xA5, 0x01], &[10], &[0, 0]);
+        runner.test(&[0xA5, 0x01])
+            .verify(A, 10)
+            .verify(Z, false)
+            .verify(N, false);
         runner.set_mem(0x01, 0xff);
-        runner.test(&[0xA5, 0x01], &[0xff], &[0, 1]);
-        // Zero Page X
+        runner.test(&[0xA5, 0x01])
+            .verify(A, 0xff)
+            .verify(Z, false)
+            .verify(N, true);
+    }
+
+    #[test]
+    fn test_lda_zero_page_x() {
+        let mut runner = TestRunner::new();
         runner.set_mem(0x01, 0x00);
-        runner.test(&[0xB5, 0x01], &[0], &[1, 0]);
+        runner.test(&[0xB5, 0x01])
+            .verify(A, 0)
+            .verify(Z, true)
+            .verify(N, false);
         runner.set_register("X", 2);
+
         runner.set_mem(0x03, 10);
-        runner.test(&[0xB5, 0x01], &[10], &[0, 0]);
+        runner.test(&[0xB5, 0x01])
+            .verify(A, 10)
+            .verify(Z, false)
+            .verify(N, false);
+
         runner.set_register("X", 0x80);
         runner.set_mem(0x7f, 0xff);
-        runner.test(&[0xB5, 0xff], &[0xff], &[0, 1]);
-        // Absolute
+        runner.test(&[0xB5, 0xff])
+            .verify(A, 0xff)
+            .verify(Z, false)
+            .verify(N, true);
+    }
+
+    #[test]
+    fn test_lda_absolute() {
+        let mut runner = TestRunner::new();
         runner.set_mem(0x1234, 0x11);
-        runner.test(&[0xAD, 0x34, 0x12], &[0x11], &[0, 0]);
-        // Absolute X
+        runner.test(&[0xAD, 0x34, 0x12])
+            .verify(A, 0x11)
+            .verify(Z, false)
+            .verify(N, false);
+    }
+
+    #[test]
+    fn test_lda_absolute_x() {
+        let mut runner = TestRunner::new();
         runner.set_mem(0x1235, 0xf0);
         runner.set_register("X", 1);
-        runner.test(&[0xBD, 0x34, 0x12], &[0xf0], &[0, 1]);
-        // Absolute Y
+        runner.test(&[0xBD, 0x34, 0x12])
+            .verify(A, 0xf0)
+            .verify(Z, false)
+            .verify(N, true);
+    }
+
+    #[test]
+    fn test_lda_absolute_y() {
+        let mut runner = TestRunner::new();
         runner.set_mem(0x1236, 0x13);
         runner.set_register("Y", 2);
-        runner.test(&[0xB9, 0x34, 0x12], &[0x13], &[0, 0]);
-        // (Indirect,X)
+        runner.test(&[0xB9, 0x34, 0x12])
+            .verify(A, 0x13)
+            .verify(Z, false)
+            .verify(N, false);
+    }
+
+    #[test]
+    fn test_lda_indexed_indirect() {
+        let mut runner = TestRunner::new();
         runner.set_register("X", 0x11);
         runner.set_mem(0x21, 0x12);
         runner.set_mem(0x22, 0x34);
         runner.set_mem(0x3412, 0x56);
-        runner.test(&[0xA1, 0x10], &[0x56], &[0, 0]);
-        // (Indirect,Y)
+        runner.test(&[0xA1, 0x10])
+            .verify(A, 0x56)
+            .verify(Z, false)
+            .verify(N, false);
+    }
+
+    #[test]
+    fn test_lda_indirect_indexed() {
+        let mut runner = TestRunner::new();
         runner.set_register("Y", 0x0f);
         runner.set_mem(0x10, 0x45);
         runner.set_mem(0x11, 0x23);
         runner.set_mem(0x2345, 0xff);
-        runner.test(&[0xB1, 0x10], &[0x0e], &[0, 0]);
+        runner.test(&[0xB1, 0x10])
+            .verify(A, 0x0e)
+            .verify(Z, false)
+            .verify(N, false);
     }
 
 }

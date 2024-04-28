@@ -18,6 +18,14 @@ impl Flags {
         }
     }
 
+    pub fn get(&self) -> u8 {
+        self.value
+    }
+
+    pub fn set(&mut self, v: u8) {
+        self.value = v
+    }
+
     pub fn c(&self) -> bool {
         self.get_bit(0)
     }

@@ -21,17 +21,26 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[(0xaa, AddressingMode::Implied
 #[cfg(test)]
 mod test {
     use crate::cpu::test_util::TestRunner;
+    use crate::cpu::test_util::Flag::*;
+    use crate::cpu::test_util::Register8::*;
 
     #[test]
     fn test_tax() {
-        let mut runner = TestRunner::new()
-            .verify_registers(&["X"])
-            .verify_flags(&["Z", "N"]);
+        let mut runner = TestRunner::new();
         runner.set_register("A", 0x21);
-        runner.test(&[0xaa], &[0x21], &[0, 0]);
+        runner.test(&[0xaa])
+            .verify(X, 0x21)
+            .verify(Z, false)
+            .verify(N, false);
         runner.set_register("A", 0);
-        runner.test(&[0xaa], &[0], &[1, 0]);
+        runner.test(&[0xaa])
+            .verify(X, 0)
+            .verify(Z, true)
+            .verify(N, false);
         runner.set_register("A", 0xf0);
-        runner.test(&[0xaa], &[0xf0], &[0, 1]);
+        runner.test(&[0xaa])
+            .verify(X, 0xf0)
+            .verify(Z, false)
+            .verify(N, true);
     }
 }

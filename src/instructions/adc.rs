@@ -34,47 +34,95 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
 #[cfg(test)]
 mod test {
     use crate::cpu::test_util::TestRunner;
+    use crate::cpu::test_util::Register8::*;
+    use crate::cpu::test_util::Flag::*;
 
 
     #[test]
     fn test_adc_implied() {
-        let mut runner = TestRunner::new()
-            .verify_registers(&["A"])
-            .verify_flags(&["C", "Z", "V", "N"]);
+        let mut runner = TestRunner::new();
         runner.set_register("A", 0x01);
-        runner.test(&[0x69, 0x01], &[0x02], &[0, 0, 0, 0]);
+        runner.test(&[0x69, 0x01])
+            .verify(A, 0x02)
+            .verify(C, false)
+            .verify(Z, false)
+            .verify(V, false)
+            .verify(N, false);
         runner.set_register("A", 0x7f);
-        runner.test(&[0x69, 0x01], &[0x80], &[0, 0, 1, 1]);
+        runner.test(&[0x69, 0x01])
+            .verify(A, 0x80)
+            .verify(C, false)
+            .verify(Z, false)
+            .verify(V, true)
+            .verify(N, true);
         runner.set_register("A", 0x80);
-        runner.test(&[0x69, 0x01], &[0x81], &[0, 0, 0, 1]);
+        runner.test(&[0x69, 0x01])
+            .verify(A, 0x81)
+            .verify(C, false)
+            .verify(Z, false)
+            .verify(V, false)
+            .verify(N, true);
         runner.set_register("A", 0xff);
-        runner.test(&[0x69, 0x01], &[0x00], &[1, 1, 0, 0]);
+        runner.test(&[0x69, 0x01])
+            .verify(A, 0x00)
+            .verify(C, true)
+            .verify(Z, true)
+            .verify(V, false)
+            .verify(N, false);
         runner.set_register("A", 0xff);
         runner.set_flag("C", 1);
-        runner.test(&[0x69, 0xff], &[0xff], &[1, 0, 0, 1]);
+        runner.test(&[0x69, 0xff])
+            .verify(A, 0xff)
+            .verify(C, true)
+            .verify(Z, false)
+            .verify(V, false)
+            .verify(N, true);
     }
 
     #[test]
     fn test_adc_zero_page() {
-        let mut runner = TestRunner::new()
-            .verify_registers(&["A"])
-            .verify_flags(&["C", "Z", "V", "N"]);
+        let mut runner = TestRunner::new();
         runner.set_mem(0x01, 0x01);
         runner.set_register("A", 0x01);
-        runner.test(&[0x65, 0x01], &[0x02], &[0, 0, 0, 0]);
+        runner.test(&[0x65, 0x01])
+            .verify(A, 0x02)
+            .verify(C, false)
+            .verify(Z, false)
+            .verify(V, false)
+            .verify(N, false);
         runner.set_mem(0x01, 0x7f);
         runner.set_register("A", 0x7f);
-        runner.test(&[0x65, 0x01], &[0xfe], &[0, 0, 1, 1]);
+        runner.test(&[0x65, 0x01])
+            .verify(A, 0xfe)
+            .verify(C, false)
+            .verify(Z, false)
+            .verify(V, true)
+            .verify(N, true);
         runner.set_mem(0x01, 0x80);
         runner.set_register("A", 0x80);
-        runner.test(&[0x65, 0x01], &[0], &[1, 1, 1, 0]);
+        runner.test(&[0x65, 0x01])
+            .verify(A, 0)
+            .verify(C, true)
+            .verify(Z, true)
+            .verify(V, true)
+            .verify(N, false);
         runner.set_flag("C", 1);
         runner.set_mem(0x01, 0xff);
         runner.set_register("A", 0xff);
-        runner.test(&[0x65, 0x01], &[0xff], &[1, 0, 0, 1]);
+        runner.test(&[0x65, 0x01])
+            .verify(A, 0xff)
+            .verify(C, true)
+            .verify(Z, false)
+            .verify(V, false)
+            .verify(N, true);
         runner.set_mem(0x01, 0xff);
         runner.set_register("A", 0xff);
         runner.set_flag("C", 1);
-        runner.test(&[0x65, 0x01], &[0xff], &[1, 0, 0, 1]);
+        runner.test(&[0x65, 0x01])
+            .verify(A, 0xff)
+            .verify(C, true)
+            .verify(Z, false)
+            .verify(V, false)
+            .verify(N, true);
     }
 }
