@@ -9,9 +9,9 @@ pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
         param: read_param(mode, bytes),
         mode,
         f: move |_, cpu| {
-            cpu.flags.set_b(true);
             cpu.push16(cpu.pc);
             cpu.push8(cpu.flags.get());
+            cpu.flags.set_b(true);
             cpu.pc = cpu.get_mem16(0xFFFE);
 
         },
@@ -23,25 +23,19 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[(0x00, AddressingMode::Implied
 #[cfg(test)]
 mod tests {
     use crate::cpu::test_util::TestRunner;
-    use crate::cpu::test_util::Register8::*;
+    use crate::cpu::test_util::Register16::*;
     use crate::cpu::test_util::Flag::*;
+    use crate::cpu::test_util::Flags;
 
     #[test]
     fn test_brk() {
         let mut runner = TestRunner::new();
-        runner.test(&[0xe8])
-            .verify(X, 1)
-            .verify(Z, false)
-            .verify(N, false);
-        runner.set(X, 0xff);
-        runner.test(&[0xe8])
-            .verify(X, 0)
-            .verify(Z, true)
-            .verify(N, false);
-        runner.set(X, 0x7f);
-        runner.test(&[0xe8])
-            .verify(X, 0x80)
-            .verify(Z, false)
-            .verify(N, true);
+        let old_flag = runner.get(Flags{});
+        runner.set_mem16(0xfffe, 0x1234)
+            .test(&[0x00])
+            .verify(B, true)
+            .verify(PC, 0x1234)
+            .verify_stack(1, old_flag)
+            .verify_stack16(2, 0x8000);
     }
 }

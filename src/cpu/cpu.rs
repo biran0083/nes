@@ -110,22 +110,30 @@ impl CPU {
     pub fn reset(&mut self) {
         self.x = 0;
         self.y = 0;
-        self.y = 0;
+        self.a = 0;
         self.sp = 0x01ff;
         self.flags = Flags::default();
         self.pc = self.get_mem16(0xFFFC);
     }
 
+    pub fn set_mem(&mut self, addr: usize, value: u8) {
+        self.mem[addr] = value;
+    }
+
     pub fn set_mem16(&mut self, addr: usize, value: u16) {
         let lsb = (value & 0xff) as u8;
         let msb = (value >> 8) as u8;
-        self.mem[addr] = lsb;
-        self.mem[addr + 1] = msb;
+        self.set_mem(addr, lsb);
+        self.set_mem(addr + 1, msb);
+    }
+
+    pub fn get_mem(&self, addr: usize) -> u8 {
+        self.mem[addr]
     }
 
     pub fn get_mem16(&self, addr: usize) -> u16 {
-        let lsb = self.mem[addr] as u16;
-        let msb = self.mem[addr + 1] as u16;
+        let lsb = self.get_mem(addr) as u16;
+        let msb = self.get_mem(addr + 1) as u16;
         (msb << 8) + lsb
     }
 
@@ -140,9 +148,11 @@ impl CPU {
     pub fn load_program(&mut self, bytes: &[u8]) {
         assert!(bytes.len() < 0x8000);
         let start: usize = 0x8000;
-        self.pc = start as u16;
         self.set_mem16(0xFFFC, start as u16);
         self.mem[start..(start + bytes.len())].copy_from_slice(bytes);
+        self.pc = start as u16;
+        self.sp = 0x01ff;
+        //self.reset()
     }
 
     fn decode(&mut self) -> Inst {

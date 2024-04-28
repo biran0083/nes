@@ -26,6 +26,14 @@ pub enum Flag {
     N,
 }
 
+pub struct Flags {}
+
+impl Retriever<u8> for Flags {
+    fn get(&self, cpu: &CPU) -> u8 {
+        cpu.flags.get()
+    }
+}
+
 impl Retriever<bool> for Flag {
     fn get(&self, cpu: &CPU) -> bool {
         match self {
@@ -108,6 +116,16 @@ impl<'a> TestResult<'a> {
         assert_eq!(retriever.get(self.cpu), value);
         self
     }
+
+    pub fn verify_stack(&self, offset: i16, value: u8) -> &Self {
+        assert_eq!(self.cpu.get_mem(self.cpu.sp as usize + offset as usize), value);
+        self
+    }
+
+    pub fn verify_stack16(&self, offset: i16, value: u16) -> &Self {
+        assert_eq!(self.cpu.get_mem16(self.cpu.sp as usize + offset as usize), value);
+        self
+    }
 }
 
 impl TestRunner {
@@ -117,8 +135,17 @@ impl TestRunner {
         }
     }
 
+    pub fn get<T>(&self, retriever: impl Retriever<T>) -> T {
+        retriever.get(&self.cpu)
+    }
+
     pub fn set_mem(&mut self, addr: usize, value: u8) -> &mut Self {
         self.cpu.mem[addr] = value;
+        self
+    }
+
+    pub fn set_mem16(&mut self, addr: usize, value: u16) -> &mut Self {
+        self.cpu.set_mem16(addr, value);
         self
     }
 
