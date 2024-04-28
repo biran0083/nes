@@ -40,7 +40,7 @@ impl TestRunner {
             "X" => self.cpu.X = value as u8,
             "Y" => self.cpu.Y = value as u8,
             "A" => self.cpu.A = value as u8,
-            "SP" => self.cpu.SP = value as u8,
+            "SP" => self.cpu.SP = value as u16,
             "PC" => self.cpu.PC = value,
             _ => panic!("unknown register {name}"),
         }
@@ -72,7 +72,7 @@ impl TestRunner {
                 "X" => assert_eq!(self.cpu.X, *r as u8),
                 "Y" => assert_eq!(self.cpu.Y, *r as u8),
                 "A" => assert_eq!(self.cpu.A, *r as u8),
-                "SP" => assert_eq!(self.cpu.SP, *r as u8),
+                "SP" => assert_eq!(self.cpu.SP, *r as u16),
                 "PC" => assert_eq!(self.cpu.PC, *r),
                 _ => panic!("unknown register {name}"),
             }

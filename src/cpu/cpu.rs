@@ -80,7 +80,7 @@ pub struct CPU {
     pub X: u8,
     pub Y: u8,
     pub A: u8,
-    pub SP: u8,
+    pub SP: u16,
     pub PC: u16,
     pub flags: Flags,
     pub mem: Vec<u8>,
@@ -103,7 +103,7 @@ impl CPU {
         self.X = 0;
         self.Y = 0;
         self.Y = 0;
-        self.SP = 0;
+        self.SP = 0x01ff;
         self.flags = Flags::default();
         self.PC = self.get_mem16(0xFFFC);
     }
@@ -156,5 +156,28 @@ impl CPU {
         loop {
             self.run_once();
         }
+    }
+
+    pub fn push8(&mut self, value: u8) {
+        self.mem[self.SP as usize] = value;
+        self.SP -= 1;
+    }
+
+    pub fn push16(&mut self, value: u16) {
+        let lsb = (value & 0xff) as u8;
+        let msb = (value >> 8) as u8;
+        self.push8(msb);
+        self.push8(lsb);
+    }
+
+    pub fn pop8(&mut self) -> u8 {
+        self.SP += 1;
+        self.mem[self.SP as usize]
+    }
+
+    pub fn pop16(&mut self) -> u16 {
+        let lsb = self.pop8() as u16;
+        let msb = self.pop8() as u16;
+        (msb << 8) + lsb
     }
 }
