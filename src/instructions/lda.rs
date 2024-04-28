@@ -77,7 +77,7 @@ mod test {
             .verify(A, 0)
             .verify(Z, true)
             .verify(N, false);
-        runner.set_register("X", 2);
+        runner.set(X, 2);
 
         runner.set_mem(0x03, 10);
         runner.test(&[0xB5, 0x01])
@@ -85,7 +85,7 @@ mod test {
             .verify(Z, false)
             .verify(N, false);
 
-        runner.set_register("X", 0x80);
+        runner.set(X, 0x80);
         runner.set_mem(0x7f, 0xff);
         runner.test(&[0xB5, 0xff])
             .verify(A, 0xff)
@@ -107,7 +107,7 @@ mod test {
     fn test_lda_absolute_x() {
         let mut runner = TestRunner::new();
         runner.set_mem(0x1235, 0xf0);
-        runner.set_register("X", 1);
+        runner.set(X, 1);
         runner.test(&[0xBD, 0x34, 0x12])
             .verify(A, 0xf0)
             .verify(Z, false)
@@ -118,7 +118,7 @@ mod test {
     fn test_lda_absolute_y() {
         let mut runner = TestRunner::new();
         runner.set_mem(0x1236, 0x13);
-        runner.set_register("Y", 2);
+        runner.set(Y, 2);
         runner.test(&[0xB9, 0x34, 0x12])
             .verify(A, 0x13)
             .verify(Z, false)
@@ -128,7 +128,7 @@ mod test {
     #[test]
     fn test_lda_indexed_indirect() {
         let mut runner = TestRunner::new();
-        runner.set_register("X", 0x11);
+        runner.set(X, 0x11);
         runner.set_mem(0x21, 0x12);
         runner.set_mem(0x22, 0x34);
         runner.set_mem(0x3412, 0x56);
@@ -141,7 +141,7 @@ mod test {
     #[test]
     fn test_lda_indirect_indexed() {
         let mut runner = TestRunner::new();
-        runner.set_register("Y", 0x0f);
+        runner.set(Y, 0x0f);
         runner.set_mem(0x10, 0x45);
         runner.set_mem(0x11, 0x23);
         runner.set_mem(0x2345, 0xff);

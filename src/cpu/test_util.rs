@@ -39,8 +39,44 @@ impl Retriever<bool> for Flag {
         }
     }
 }
+pub trait Setter<T> {
+    fn set(&self, cpu: &mut CPU, value: T);
+}
 
-trait Retriever<T> {
+impl Setter<u8> for Register8 {
+    fn set(&self, cpu: &mut CPU, value: u8) {
+        match self {
+            Register8::X => cpu.x = value,
+            Register8::Y => cpu.y = value,
+            Register8::A => cpu.a = value,
+        }
+    }
+}
+
+impl Setter<u16> for Register16 {
+    fn set(&self, cpu: &mut CPU, value: u16) {
+        match self {
+            Register16::SP => cpu.sp = value,
+            Register16::PC => cpu.pc = value,
+        }
+    }
+}
+
+impl Setter<bool> for Flag {
+    fn set(&self, cpu: &mut CPU, value: bool) {
+        match self {
+            Flag::C => cpu.flags.set_c(value),
+            Flag::Z => cpu.flags.set_z(value),
+            Flag::I => cpu.flags.set_i(value),
+            Flag::D => cpu.flags.set_d(value),
+            Flag::B => cpu.flags.set_b(value),
+            Flag::V => cpu.flags.set_v(value),
+            Flag::N => cpu.flags.set_n(value),
+        }
+    }
+}
+
+pub trait Retriever<T> {
     fn get(&self, cpu: &CPU) -> T;
 }
 
@@ -86,30 +122,8 @@ impl TestRunner {
         self
     }
 
-    pub fn set_register(&mut self, name: &str, value: u16) -> &mut Self {
-        match name {
-            "X" => self.cpu.x = value as u8,
-            "Y" => self.cpu.y = value as u8,
-            "A" => self.cpu.a = value as u8,
-            "SP" => self.cpu.sp = value as u16,
-            "PC" => self.cpu.pc = value,
-            _ => panic!("unknown register {name}"),
-        }
-        self
-    }
-
-    pub fn set_flag(&mut self, name: &str, v: u8) -> &mut Self {
-        let v = if v == 0 { false} else {true};
-        match name {
-            "C" => self.cpu.flags.set_c(v),
-            "Z" => self.cpu.flags.set_z(v),
-            "I" => self.cpu.flags.set_i(v),
-            "D" => self.cpu.flags.set_d(v),
-            "B" => self.cpu.flags.set_b(v),
-            "V" => self.cpu.flags.set_v(v),
-            "N" => self.cpu.flags.set_n(v),
-            _ => panic!("unknown flag {name}"),
-        }
+    pub fn set<T>(&mut self, setter: impl Setter<T>, value: T) -> &mut Self {
+        setter.set(&mut self.cpu, value);
         self
     }
 

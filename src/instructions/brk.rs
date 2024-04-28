@@ -33,12 +33,12 @@ mod tests {
             .verify(X, 1)
             .verify(Z, false)
             .verify(N, false);
-        runner.set_register("X", 0xff);
+        runner.set(X, 0xff);
         runner.test(&[0xe8])
             .verify(X, 0)
             .verify(Z, true)
             .verify(N, false);
-        runner.set_register("X", 0x7f);
+        runner.set(X, 0x7f);
         runner.test(&[0xe8])
             .verify(X, 0x80)
             .verify(Z, false)

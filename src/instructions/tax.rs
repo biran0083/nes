@@ -27,17 +27,17 @@ mod test {
     #[test]
     fn test_tax() {
         let mut runner = TestRunner::new();
-        runner.set_register("A", 0x21);
+        runner.set(A, 0x21);
         runner.test(&[0xaa])
             .verify(X, 0x21)
             .verify(Z, false)
             .verify(N, false);
-        runner.set_register("A", 0);
+        runner.set(A, 0);
         runner.test(&[0xaa])
             .verify(X, 0)
             .verify(Z, true)
             .verify(N, false);
-        runner.set_register("A", 0xf0);
+        runner.set(A, 0xf0);
         runner.test(&[0xaa])
             .verify(X, 0xf0)
             .verify(Z, false)

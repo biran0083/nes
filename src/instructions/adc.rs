@@ -41,36 +41,36 @@ mod test {
     #[test]
     fn test_adc_implied() {
         let mut runner = TestRunner::new();
-        runner.set_register("A", 0x01);
+        runner.set(A, 0x01);
         runner.test(&[0x69, 0x01])
             .verify(A, 0x02)
             .verify(C, false)
             .verify(Z, false)
             .verify(V, false)
             .verify(N, false);
-        runner.set_register("A", 0x7f);
+        runner.set(A, 0x7f);
         runner.test(&[0x69, 0x01])
             .verify(A, 0x80)
             .verify(C, false)
             .verify(Z, false)
             .verify(V, true)
             .verify(N, true);
-        runner.set_register("A", 0x80);
+        runner.set(A, 0x80);
         runner.test(&[0x69, 0x01])
             .verify(A, 0x81)
             .verify(C, false)
             .verify(Z, false)
             .verify(V, false)
             .verify(N, true);
-        runner.set_register("A", 0xff);
+        runner.set(A, 0xff);
         runner.test(&[0x69, 0x01])
             .verify(A, 0x00)
             .verify(C, true)
             .verify(Z, true)
             .verify(V, false)
             .verify(N, false);
-        runner.set_register("A", 0xff);
-        runner.set_flag("C", 1);
+        runner.set(A, 0xff);
+        runner.set(C, true);
         runner.test(&[0x69, 0xff])
             .verify(A, 0xff)
             .verify(C, true)
@@ -83,7 +83,7 @@ mod test {
     fn test_adc_zero_page() {
         let mut runner = TestRunner::new();
         runner.set_mem(0x01, 0x01);
-        runner.set_register("A", 0x01);
+        runner.set(A, 0x01);
         runner.test(&[0x65, 0x01])
             .verify(A, 0x02)
             .verify(C, false)
@@ -91,7 +91,7 @@ mod test {
             .verify(V, false)
             .verify(N, false);
         runner.set_mem(0x01, 0x7f);
-        runner.set_register("A", 0x7f);
+        runner.set(A, 0x7f);
         runner.test(&[0x65, 0x01])
             .verify(A, 0xfe)
             .verify(C, false)
@@ -99,16 +99,16 @@ mod test {
             .verify(V, true)
             .verify(N, true);
         runner.set_mem(0x01, 0x80);
-        runner.set_register("A", 0x80);
+        runner.set(A, 0x80);
         runner.test(&[0x65, 0x01])
             .verify(A, 0)
             .verify(C, true)
             .verify(Z, true)
             .verify(V, true)
             .verify(N, false);
-        runner.set_flag("C", 1);
+        runner.set(C, true);
         runner.set_mem(0x01, 0xff);
-        runner.set_register("A", 0xff);
+        runner.set(A, 0xff);
         runner.test(&[0x65, 0x01])
             .verify(A, 0xff)
             .verify(C, true)
@@ -116,8 +116,8 @@ mod test {
             .verify(V, false)
             .verify(N, true);
         runner.set_mem(0x01, 0xff);
-        runner.set_register("A", 0xff);
-        runner.set_flag("C", 1);
+        runner.set(A, 0xff);
+        runner.set(C, true);
         runner.test(&[0x65, 0x01])
             .verify(A, 0xff)
             .verify(C, true)
