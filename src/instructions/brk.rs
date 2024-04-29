@@ -1,22 +1,14 @@
 
-use crate::cpu::addressing_mode::{read_param, AddressingMode};
-use super::Inst;
+use crate::cpu::addressing_mode::{AddressingMode};
+use super::InstFun;
 
-pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
-    assert!(matches!(mode, AddressingMode::Implied));
-    Inst {
-        name: "BRK",
-        param: read_param(mode, bytes),
-        mode,
-        f: move |_, cpu| {
-            cpu.push16(cpu.pc);
-            cpu.push8(cpu.flags.get());
-            cpu.flags.set_b(true);
-            cpu.pc = cpu.get_mem16(0xFFFE);
+pub const RUN : InstFun = |_, cpu| {
+    cpu.push16(cpu.pc);
+    cpu.push8(cpu.flags.get());
+    cpu.flags.set_b(true);
+    cpu.pc = cpu.get_mem16(0xFFFE);
 
-        },
-    }
-}
+};
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[(0x00, AddressingMode::Implied)];
 

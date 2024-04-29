@@ -16,4 +16,4 @@ mod bpl;
 mod bvc;
 mod bvs;
 mod clc;
-pub use common::{Inst, INST_FACTORIES, disassemble};
+pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

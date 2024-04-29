@@ -1,20 +1,11 @@
 
-use crate::cpu::addressing_mode::{read_param, AddressingMode};
-use super::Inst;
+use crate::cpu::addressing_mode::{AddressingMode};
+use super::InstFun;
 
-pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
-    assert!(matches!(mode, AddressingMode::Implied));
-    Inst {
-        name: "CLC",
-        param: read_param(mode, bytes),
-        mode,
-        f: move |ins, cpu| {
-            cpu.flags.set_c(false);
-            cpu.pc += ins.len();
-        },
-    }
-}
-
+pub const RUN : InstFun = |ins, cpu| {
+    cpu.flags.set_c(false);
+    cpu.pc += ins.len();
+};
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[(0x18, AddressingMode::Implied)];
 
 #[cfg(test)]

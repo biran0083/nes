@@ -1,20 +1,13 @@
-use crate::cpu::addressing_mode::{load_operand, read_param, AddressingMode};
+use crate::cpu::addressing_mode::{load_operand, AddressingMode};
 use crate::cpu::CPU;
-use super::Inst;
+use super::InstFun;
 
-pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
-    Inst {
-        name: "LDA",
-        param: read_param(mode, bytes),
-        mode,
-        f: move |ins, cpu: &mut CPU| {
-            cpu.a = load_operand(ins.mode, cpu, ins.param.unwrap());
-            cpu.update_z(cpu.a);
-            cpu.update_n(cpu.a);
-            cpu.pc += ins.len();
-        },
-    }
-}
+pub const RUN : InstFun = |ins, cpu: &mut CPU| {
+    cpu.a = load_operand(ins.mode, cpu, ins.param.unwrap());
+    cpu.update_z(cpu.a);
+    cpu.update_n(cpu.a);
+    cpu.pc += ins.len();
+};
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
         (0xA9, AddressingMode::Immediate),

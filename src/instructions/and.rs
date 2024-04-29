@@ -1,21 +1,13 @@
-use crate::cpu::addressing_mode::{load_operand, read_param, AddressingMode};
-use super::Inst;
+use crate::cpu::addressing_mode::{load_operand, AddressingMode};
+use super::InstFun;
 
-pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
-    Inst {
-        name: "AND",
-        param: read_param(mode, bytes),
-        mode,
-        f: move |ins, cpu| {
-            let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
-            let result16 = cpu.a as u16 & operand as u16;
-            cpu.a = cpu.a & operand;
-            cpu.update_z(cpu.a);
-            cpu.update_n(cpu.a);
-            cpu.pc += ins.len();
-        },
-    }
-}
+pub const RUN : InstFun = |ins, cpu| {
+    let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
+    cpu.a = cpu.a & operand;
+    cpu.update_z(cpu.a);
+    cpu.update_n(cpu.a);
+    cpu.pc += ins.len();
+};
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
         (0x29, AddressingMode::Immediate),

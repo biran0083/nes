@@ -1,22 +1,15 @@
-use crate::cpu::addressing_mode::{load_operand, read_param, AddressingMode};
+use crate::cpu::addressing_mode::{load_operand, AddressingMode};
 use crate::cpu::CPU;
-use super::Inst;
+use super::{Inst, InstFun};
 
-pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
-    Inst {
-        name: "BIT",
-        param: read_param(mode, bytes),
-        mode,
-        f: move |ins, cpu: &mut CPU| {
-            let m = load_operand(ins.mode, cpu, ins.param.unwrap());
-            let res = cpu.a & m;
-            cpu.flags.set_z(res == 0);
-            cpu.flags.set_v((m & 0x40) != 0);
-            cpu.flags.set_n((m & 0x80) != 0);
-            cpu.pc = ins.len();
-        },
-    }
-}
+pub const RUN : InstFun = |ins, cpu: &mut CPU| {
+    let m = load_operand(ins.mode, cpu, ins.param.unwrap());
+    let res = cpu.a & m;
+    cpu.flags.set_z(res == 0);
+    cpu.flags.set_v((m & 0x40) != 0);
+    cpu.flags.set_n((m & 0x80) != 0);
+    cpu.pc = ins.len();
+};
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
         (0x24, AddressingMode::ZeroPage),

@@ -6,10 +6,9 @@ use crate::{
     cpu::CPU,
 };
 
-type InstFun = fn(&Inst, &mut CPU);
-type InstFactoryFun = fn(AddressingMode, &[u8]) -> Inst;
+pub type InstFun = fn(&Inst, &mut CPU);
 pub struct Inst {
-    pub name: &'static str,
+    pub name: String,
     pub param: Option<u16>,
     pub mode: AddressingMode,
     pub f: InstFun,
@@ -65,24 +64,32 @@ impl std::fmt::Debug for Inst {
 }
 
 pub struct InstFactory {
+    pub name: String,
     pub mode: AddressingMode,
-    pub f: InstFactoryFun,
+    pub f: InstFun,
 }
 
 impl InstFactory {
-    pub fn make(&self, iter: &[u8]) -> Inst {
-        (self.f)(self.mode, iter)
+    pub fn make(&self, bytes: &[u8]) -> Inst {
+        Inst {
+            name: self.name.clone(),
+            param: self.mode.read_param(bytes),
+            mode: self.mode,
+            f: self.f,
+        }
     }
 }
 
 struct InstructionInfo {
-    f: InstFactoryFun,
+    name: String,
+    f: InstFun,
     opcode_to_addressing_mode: &'static[(u8, AddressingMode)],
 }
 
 impl InstructionInfo {
-    pub fn new(f: InstFactoryFun, opcode_to_addressing_mode: &'static[(u8, AddressingMode)]) -> Self {
+    pub fn new(name: String, f: InstFun, opcode_to_addressing_mode: &'static[(u8, AddressingMode)]) -> Self {
         InstructionInfo {
+            name,
             f,
             opcode_to_addressing_mode,
         }
@@ -92,10 +99,59 @@ impl InstructionInfo {
 macro_rules! instruction_info {
     ($module:ident) => {
         InstructionInfo::new(
-            crate::instructions::$module::make,
+            stringify!($module).to_uppercase(),
+            crate::instructions::$module::RUN,
             crate::instructions::$module::OPCODE_MAP
         )
     };
+}
+
+#[macro_export]
+macro_rules! define_jump {
+    ($opcode: expr, $flag: expr, $value: expr) => {
+        use crate::cpu::addressing_mode::{load_operand, AddressingMode};
+        use crate::cpu::CPU;
+        use super::InstFun;
+        use crate::cpu::test_util::Flag::*;
+        use crate::cpu::test_util::Retriever;
+
+        pub const RUN : InstFun = |ins, cpu: &mut CPU| {
+            let operand : i8 = load_operand(ins.mode, cpu, ins.param.unwrap()) as i8;
+            if $flag.get(cpu) == $value {
+                cpu.pc = cpu.pc.wrapping_add(operand as u16);
+            }
+            cpu.pc = cpu.pc.wrapping_add(ins.len());
+        };
+
+        pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
+                ($opcode, AddressingMode::Relative),
+            ];
+
+        #[cfg(test)]
+        mod test {
+            use crate::cpu::test_util::TestRunner;
+            use crate::cpu::test_util::Register16::*;
+            use crate::cpu::test_util::Flag::*;
+
+            #[test]
+            fn test_relative() {
+                let mut runner = TestRunner::new();
+                runner.set($flag, $value);
+                runner.set(PC, 0x8000);
+                runner.test(&[$opcode, 0x01])
+                    .verify(PC, 0x8003);
+                runner.set(PC, 0x8000);
+                runner.test(&[$opcode, 0x80])
+                    .verify(PC, 0x7f82);
+                runner.set(PC, 0x8000);
+                runner.test(&[$opcode, 0xff])
+                    .verify(PC, 0x8001);
+                runner.set($flag, !$value);
+                runner.test(&[$opcode, 0xff])
+                    .verify(PC, 0x8002);
+            }
+        }
+    }
 }
 
 lazy_static! {
@@ -126,6 +182,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
                 *op,
                 InstFactory {
                     mode: *mode,
+                    name: info.name.clone(),
                     f: info.f,
                 },
             );

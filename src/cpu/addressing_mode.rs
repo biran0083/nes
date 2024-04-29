@@ -15,23 +15,27 @@ pub enum AddressingMode {
     Relative,
 }
 
-pub fn read_param(mode: AddressingMode, bytes: &[u8]) -> Option<u16> {
-    match mode {
-        AddressingMode::Implied |
-        AddressingMode::Accumulator => None,
-        AddressingMode::Immediate
-        | AddressingMode::Relative
-        | AddressingMode::ZeroPage
-        | AddressingMode::ZeroPageX
-        | AddressingMode::IndexedIndirect
-        | AddressingMode::IndirectIndexed => Some(bytes[0] as u16),
-        AddressingMode::Absolute | AddressingMode::AbsoluteX | AddressingMode::AbsoluteY => {
-            let lsb: u16 = bytes[0] as u16;
-            let msb: u16 = bytes[1] as u16;
-            Some((msb << 8) + lsb)
+impl AddressingMode {
+
+    pub fn read_param(&self,  bytes: &[u8]) -> Option<u16> {
+        match *self {
+            AddressingMode::Implied |
+            AddressingMode::Accumulator => None,
+            AddressingMode::Immediate
+            | AddressingMode::Relative
+            | AddressingMode::ZeroPage
+            | AddressingMode::ZeroPageX
+            | AddressingMode::IndexedIndirect
+            | AddressingMode::IndirectIndexed => Some(bytes[0] as u16),
+            AddressingMode::Absolute | AddressingMode::AbsoluteX | AddressingMode::AbsoluteY => {
+                let lsb: u16 = bytes[0] as u16;
+                let msb: u16 = bytes[1] as u16;
+                Some((msb << 8) + lsb)
+            }
         }
     }
 }
+
 
 pub fn load_operand_opt(mode: AddressingMode, cpu: &CPU, param: Option<u16>) -> u8 {
     match mode {

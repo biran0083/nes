@@ -1,23 +1,17 @@
-use crate::cpu::addressing_mode::{load_operand, load_operand_opt, read_param, AddressingMode};
+use crate::cpu::addressing_mode::{load_operand, load_operand_opt, AddressingMode};
 use crate::cpu::CPU;
-use super::Inst;
+use super::InstFun;
 
-pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
-    Inst {
-        name: "ASL",
-        param: read_param(mode, bytes),
-        mode,
-        f: move |ins, cpu: &mut CPU| {
-            let m = load_operand_opt(ins.mode, cpu, ins.param);
-            let res: u16 = (m as u16) << 1;
-            cpu.a = res as u8;
-            cpu.update_z(cpu.a);
-            cpu.update_n(cpu.a);
-            cpu.flags.set_c(res & 0x100 != 0);
-            cpu.pc += ins.len();
-        },
-    }
-}
+
+pub const RUN : InstFun = |ins, cpu: &mut CPU| {
+    let m = load_operand_opt(ins.mode, cpu, ins.param);
+    let res: u16 = (m as u16) << 1;
+    cpu.a = res as u8;
+    cpu.update_z(cpu.a);
+    cpu.update_n(cpu.a);
+    cpu.flags.set_c(res & 0x100 != 0);
+    cpu.pc += ins.len();
+};
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
         (0x0A, AddressingMode::Accumulator),
