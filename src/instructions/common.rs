@@ -23,7 +23,8 @@ impl Inst {
 
     pub fn len(&self) -> u16 {
         match self.mode {
-            AddressingMode::Implied => 1,
+            AddressingMode::Implied |
+            AddressingMode::Accumulator => 1,
             AddressingMode::Immediate
             | AddressingMode::ZeroPage
             | AddressingMode::ZeroPageX
@@ -38,6 +39,7 @@ impl std::fmt::Debug for Inst {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.mode {
             AddressingMode::Implied => write!(f, "{}", self.name),
+            AddressingMode::Accumulator => write!(f, "{} A", self.name),
             AddressingMode::Immediate => write!(f, "{} #${:02x}", self.name, self.param.unwrap()),
             AddressingMode::ZeroPage => write!(f, "{} ${:02x}, X", self.name, self.param.unwrap()),
             AddressingMode::ZeroPageX => {
@@ -102,6 +104,8 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(inx),
         instruction_info!(brk),
         instruction_info!(adc),
+        instruction_info!(and),
+        instruction_info!(asl),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {

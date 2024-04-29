@@ -1,5 +1,4 @@
 
-use std::iter::zip;
 use crate::cpu::CPU;
 
 pub struct TestRunner {
@@ -14,7 +13,6 @@ pub enum Register8 {
 pub enum Register16 {
     SP, PC
 }
-
 
 pub enum Flag {
     C,

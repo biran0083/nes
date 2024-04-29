@@ -4,6 +4,7 @@ use crate::cpu::CPU;
 pub enum AddressingMode {
     Implied,
     Immediate,
+    Accumulator,
     ZeroPage,
     ZeroPageX,
     Absolute,
@@ -15,7 +16,8 @@ pub enum AddressingMode {
 
 pub fn read_param(mode: AddressingMode, bytes: &[u8]) -> Option<u16> {
     match mode {
-        AddressingMode::Implied => None,
+        AddressingMode::Implied |
+        AddressingMode::Accumulator => None,
         AddressingMode::Immediate
         | AddressingMode::ZeroPage
         | AddressingMode::ZeroPageX
@@ -29,11 +31,19 @@ pub fn read_param(mode: AddressingMode, bytes: &[u8]) -> Option<u16> {
     }
 }
 
+pub fn load_operand_opt(mode: AddressingMode, cpu: &CPU, param: Option<u16>) -> u8 {
+    match mode {
+        AddressingMode::Accumulator => return cpu.a,
+        _ => load_operand(mode, cpu, param.unwrap())
+    }
+}
+
 pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
     match mode {
         AddressingMode::Implied => {
             panic!("load_operand should not be called for Implied instruction")
         }
+        AddressingMode::Accumulator => cpu.a,
         AddressingMode::Immediate => {
             assert!(param <= 0xff);
             param as u8

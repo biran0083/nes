@@ -1,0 +1,56 @@
+use crate::cpu::addressing_mode::{load_operand, read_param, AddressingMode};
+use super::Inst;
+
+pub fn make(mode: AddressingMode, bytes: &[u8]) -> Inst {
+    Inst {
+        name: "AND",
+        param: read_param(mode, bytes),
+        mode,
+        f: move |ins, cpu| {
+            let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
+            let result16 = cpu.a as u16 & operand as u16;
+            cpu.a = cpu.a & operand;
+            cpu.update_z(cpu.a);
+            cpu.update_n(cpu.a);
+            cpu.pc += ins.len();
+        },
+    }
+}
+
+pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
+        (0x29, AddressingMode::Immediate),
+        (0x25, AddressingMode::ZeroPage),
+        (0x35, AddressingMode::ZeroPageX),
+        (0x2D, AddressingMode::Absolute),
+        (0x3D, AddressingMode::AbsoluteX),
+        (0x39, AddressingMode::AbsoluteY),
+        (0x21, AddressingMode::IndexedIndirect),
+        (0x31, AddressingMode::IndirectIndexed),
+    ];
+
+#[cfg(test)]
+mod test {
+    use crate::cpu::test_util::TestRunner;
+    use crate::cpu::test_util::Register8::*;
+    use crate::cpu::test_util::Flag::*;
+
+    #[test]
+    fn test_immediate() {
+        let mut runner = TestRunner::new();
+        runner.set(A, 0x01);
+        runner.test(&[0x29, 0x10])
+            .verify(A, 0x00)
+            .verify(Z, true)
+            .verify(N, false);
+        runner.set(A, 0xff);
+        runner.test(&[0x29, 0x00])
+            .verify(A, 0x00)
+            .verify(Z, true)
+            .verify(N, false);
+        runner.set(A, 0xf0);
+        runner.test(&[0x29, 0xf1])
+            .verify(A, 0xf0)
+            .verify(Z, false)
+            .verify(N, true);
+    }
+}

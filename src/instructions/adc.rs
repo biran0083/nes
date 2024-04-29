@@ -39,7 +39,7 @@ mod test {
 
 
     #[test]
-    fn test_adc_implied() {
+    fn test_adc_immediate() {
         let mut runner = TestRunner::new();
         runner.set(A, 0x01);
         runner.test(&[0x69, 0x01])
