@@ -13,4 +13,7 @@ mod bit;
 mod bmi;
 mod bne;
 mod bpl;
+mod bvc;
+mod bvs;
+mod clc;
 pub use common::{Inst, INST_FACTORIES, disassemble};
