@@ -12,6 +12,7 @@ pub enum AddressingMode {
     AbsoluteY,
     IndexedIndirect,
     IndirectIndexed,
+    Relative,
 }
 
 pub fn read_param(mode: AddressingMode, bytes: &[u8]) -> Option<u16> {
@@ -19,6 +20,7 @@ pub fn read_param(mode: AddressingMode, bytes: &[u8]) -> Option<u16> {
         AddressingMode::Implied |
         AddressingMode::Accumulator => None,
         AddressingMode::Immediate
+        | AddressingMode::Relative
         | AddressingMode::ZeroPage
         | AddressingMode::ZeroPageX
         | AddressingMode::IndexedIndirect
@@ -44,6 +46,7 @@ pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
             panic!("load_operand should not be called for Implied instruction")
         }
         AddressingMode::Accumulator => cpu.a,
+        AddressingMode::Relative |
         AddressingMode::Immediate => {
             assert!(param <= 0xff);
             param as u8

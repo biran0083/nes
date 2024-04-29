@@ -26,6 +26,7 @@ impl Inst {
             AddressingMode::Implied |
             AddressingMode::Accumulator => 1,
             AddressingMode::Immediate
+            | AddressingMode::Relative
             | AddressingMode::ZeroPage
             | AddressingMode::ZeroPageX
             | AddressingMode::IndexedIndirect
@@ -40,6 +41,7 @@ impl std::fmt::Debug for Inst {
         match self.mode {
             AddressingMode::Implied => write!(f, "{}", self.name),
             AddressingMode::Accumulator => write!(f, "{} A", self.name),
+            AddressingMode::Relative|
             AddressingMode::Immediate => write!(f, "{} #${:02x}", self.name, self.param.unwrap()),
             AddressingMode::ZeroPage => write!(f, "{} ${:02x}, X", self.name, self.param.unwrap()),
             AddressingMode::ZeroPageX => {
@@ -106,6 +108,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(adc),
         instruction_info!(and),
         instruction_info!(asl),
+        instruction_info!(bcc),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {

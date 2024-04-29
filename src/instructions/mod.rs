@@ -6,4 +6,5 @@ mod inx;
 mod brk;
 mod and;
 mod asl;
+mod bcc;
 pub use common::{Inst, INST_FACTORIES, disassemble};
