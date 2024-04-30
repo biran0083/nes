@@ -107,7 +107,40 @@ macro_rules! instruction_info {
 }
 
 #[macro_export]
-macro_rules! define_jump {
+macro_rules! define_flag_inst {
+    ($opcode: expr, $flag: expr, $value: expr) => {
+        use crate::cpu::addressing_mode::AddressingMode;
+        use super::InstFun;
+        use crate::cpu::test_util::Flag::*;
+        use crate::cpu::test_util::Setter;
+
+        pub const RUN : InstFun = |ins, cpu| {
+            $flag.set(cpu, $value);
+            cpu.pc += ins.len();
+        };
+        pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[($opcode, AddressingMode::Implied)];
+
+        #[cfg(test)]
+        mod tests {
+            use crate::cpu::test_util::TestRunner;
+            use crate::cpu::test_util::Flag::*;
+
+            #[test]
+            fn test_brk() {
+                let mut runner = TestRunner::new();
+                runner.set($flag, !$value)
+                    .test(&[$opcode])
+                    .verify($flag, $value);
+                runner.set($flag, $value)
+                    .test(&[$opcode])
+                    .verify($flag, $value);
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! define_jump_inst {
     ($opcode: expr, $flag: expr, $value: expr) => {
         use crate::cpu::addressing_mode::{load_operand, AddressingMode};
         use crate::cpu::CPU;
@@ -174,11 +207,14 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(bvc),
         instruction_info!(bvs),
         instruction_info!(clc),
+        instruction_info!(sec),
+        instruction_info!(cld),
+        instruction_info!(sed),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {
         for (op, mode) in info.opcode_to_addressing_mode {
-            inst_factory_by_op_code.insert(
+            let res = inst_factory_by_op_code.insert(
                 *op,
                 InstFactory {
                     mode: *mode,
@@ -186,6 +222,9 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
                     f: info.f,
                 },
             );
+            if res.is_some() {
+                panic!("duplicate op code: {:#x}", op);
+            }
         }
     }
     inst_factory_by_op_code

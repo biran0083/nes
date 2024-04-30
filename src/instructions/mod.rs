@@ -16,4 +16,7 @@ mod bpl;
 mod bvc;
 mod bvs;
 mod clc;
+mod sec;
+mod cld;
+mod sed;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

@@ -1,3 +1,3 @@
-use crate::define_jump;
+use crate::define_jump_inst;
 
-define_jump!(0xD0, Z, false);
+define_jump_inst!(0xD0, Z, false);

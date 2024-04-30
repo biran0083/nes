@@ -1,6 +1,6 @@
 use crate::cpu::addressing_mode::{load_operand, AddressingMode};
 use crate::cpu::CPU;
-use super::{Inst, InstFun};
+use super::InstFun;
 
 pub const RUN : InstFun = |ins, cpu: &mut CPU| {
     let m = load_operand(ins.mode, cpu, ins.param.unwrap());
