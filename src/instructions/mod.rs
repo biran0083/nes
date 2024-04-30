@@ -23,4 +23,6 @@ mod cli;
 mod sei;
 mod clv;
 mod cmp;
+mod cpx;
+mod cpy;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

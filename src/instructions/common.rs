@@ -214,6 +214,8 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(sei),
         instruction_info!(clv),
         instruction_info!(cmp),
+        instruction_info!(cpx),
+        instruction_info!(cpy),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {
