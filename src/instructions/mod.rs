@@ -19,4 +19,8 @@ mod clc;
 mod sec;
 mod cld;
 mod sed;
+mod cli;
+mod sei;
+mod clv;
+mod cmp;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};
