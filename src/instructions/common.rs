@@ -187,6 +187,68 @@ macro_rules! define_jump_inst {
     }
 }
 
+
+#[macro_export]
+macro_rules! defube_cmp_inst {
+    ($reg: expr, $opcode_map: expr) => {
+        use crate::cpu::{addressing_mode::{load_operand, AddressingMode}, test_util::{Flag, Setter}};
+        use super::InstFun;
+        use crate::cpu::test_util::Register8::*;
+        use crate::cpu::test_util::Retriever;
+
+        pub const RUN : InstFun = |ins, cpu| {
+            let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
+            let res = $reg.get(&cpu).wrapping_sub(operand);
+            Flag::C.set(cpu, $reg.get(&cpu) >= operand);
+            Flag::Z.set(cpu, $reg.get(&cpu) == operand);
+            Flag::N.set(cpu, res & 0x80 != 0);
+            cpu.pc += ins.len();
+        };
+
+        pub const OPCODE_MAP: &[(u8, AddressingMode)] = $opcode_map;
+
+        #[cfg(test)]
+        mod test {
+            use crate::cpu::test_util::TestRunner;
+            use crate::cpu::test_util::Register8::*;
+            use crate::cpu::test_util::Flag::*;
+            use crate::cpu::addressing_mode::AddressingMode;
+            use super::OPCODE_MAP;
+
+            fn get_immediate_opcode() -> u8 {
+                assert_eq!(OPCODE_MAP[0].1, AddressingMode::Immediate);
+                OPCODE_MAP[0].0
+            }
+
+            #[test]
+            fn test_immediate() {
+                let mut runner = TestRunner::new();
+                let opcode = get_immediate_opcode();
+                runner.set($reg, 0x01);
+                runner.test(&[opcode, 0x01])
+                    .verify(C, true)
+                    .verify(Z, true)
+                    .verify(N, false);
+                runner.set($reg, 0xff);
+                runner.test(&[opcode, 0x00])
+                    .verify(C, true)
+                    .verify(Z, false)
+                    .verify(N, true);
+                runner.set($reg, 0x03);
+                runner.test(&[opcode, 0x02])
+                    .verify(C, true)
+                    .verify(Z, false)
+                    .verify(N, false);
+                runner.set($reg, 0x02);
+                runner.test(&[opcode, 0x03])
+                    .verify(C, false)
+                    .verify(Z, false)
+                    .verify(N, true);
+            }
+        }
+    };
+}
+
 lazy_static! {
 pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
