@@ -13,6 +13,7 @@ pub enum AddressingMode {
     IndexedIndirect,
     IndirectIndexed,
     Relative,
+    Indirect,
 }
 
 impl AddressingMode {
@@ -27,7 +28,10 @@ impl AddressingMode {
             | AddressingMode::ZeroPageX
             | AddressingMode::IndexedIndirect
             | AddressingMode::IndirectIndexed => Some(bytes[0] as u16),
-            AddressingMode::Absolute | AddressingMode::AbsoluteX | AddressingMode::AbsoluteY => {
+            AddressingMode::Absolute
+            | AddressingMode::Indirect
+            | AddressingMode::AbsoluteX
+            | AddressingMode::AbsoluteY => {
                 let lsb: u16 = bytes[0] as u16;
                 let msb: u16 = bytes[1] as u16;
                 Some((msb << 8) + lsb)
@@ -46,6 +50,7 @@ pub fn load_operand_opt(mode: AddressingMode, cpu: &CPU, param: Option<u16>) -> 
 
 pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
     match mode {
+        AddressingMode::Indirect |
         AddressingMode::Implied => {
             panic!("load_operand should not be called for Implied instruction")
         }
@@ -81,6 +86,9 @@ pub fn load_operand_addr(mode: AddressingMode, cpu: &CPU, param: u16) -> usize {
         AddressingMode::IndirectIndexed |
         AddressingMode::Implied => {
             panic!("load_operand_addr should not be called for {:?} instruction", mode)
+        }
+        AddressingMode::Indirect => {
+            cpu.get_mem16(param as usize) as usize
         }
         AddressingMode::ZeroPage => {
             assert!(param <= 0xff);

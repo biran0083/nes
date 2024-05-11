@@ -30,7 +30,10 @@ impl Inst {
             | AddressingMode::ZeroPageX
             | AddressingMode::IndexedIndirect
             | AddressingMode::IndirectIndexed => 2,
-            AddressingMode::Absolute | AddressingMode::AbsoluteX | AddressingMode::AbsoluteY => 3,
+            AddressingMode::Indirect
+            | AddressingMode::Absolute
+            | AddressingMode::AbsoluteX
+            | AddressingMode::AbsoluteY => 3,
         }
     }
 }
@@ -59,6 +62,7 @@ impl std::fmt::Debug for Inst {
             AddressingMode::IndirectIndexed => {
                 write!(f, "{} (${:#02x}), Y", self.name, self.param.unwrap())
             }
+            AddressingMode::Indirect => write!(f, "{} (${:#04x})", self.name, self.param.unwrap()),
         }
     }
 }
@@ -289,6 +293,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(inc),
         instruction_info!(inx),
         instruction_info!(iny),
+        instruction_info!(jmp),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {
