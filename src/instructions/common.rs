@@ -259,7 +259,6 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
         instruction_info!(lda),
         instruction_info!(tax),
-        instruction_info!(inx),
         instruction_info!(brk),
         instruction_info!(adc),
         instruction_info!(and),
@@ -286,6 +285,10 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(dec),
         instruction_info!(dex),
         instruction_info!(dey),
+        instruction_info!(eor),
+        instruction_info!(inc),
+        instruction_info!(inx),
+        instruction_info!(iny),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {
