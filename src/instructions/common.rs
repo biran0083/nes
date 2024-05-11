@@ -294,6 +294,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(inx),
         instruction_info!(iny),
         instruction_info!(jmp),
+        instruction_info!(jsr),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {

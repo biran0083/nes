@@ -32,4 +32,5 @@ mod inc;
 mod inx;
 mod iny;
 mod jmp;
+mod jsr;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};
