@@ -24,6 +24,18 @@ pub enum Flag {
     N,
 }
 
+pub struct Mem {
+    addr: usize,
+}
+
+impl Mem {
+    pub fn new(addr: usize) -> Self {
+        Mem {
+            addr
+        }
+    }
+}
+
 pub struct Flags {}
 
 impl Retriever<u8> for Flags {
@@ -45,6 +57,13 @@ impl Retriever<bool> for Flag {
         }
     }
 }
+
+impl Retriever<u8> for Mem {
+    fn get(&self, cpu: &CPU) -> u8 {
+        cpu.get_mem(self.addr)
+    }
+}
+
 pub trait Setter<T> {
     fn set(&self, cpu: &mut CPU, value: T);
 }
@@ -79,6 +98,12 @@ impl Setter<bool> for Flag {
             Flag::V => cpu.flags.set_v(value),
             Flag::N => cpu.flags.set_n(value),
         }
+    }
+}
+
+impl Setter<u8> for Mem {
+    fn set(&self, cpu: &mut CPU, value: u8) {
+        cpu.set_mem(self.addr, value);
     }
 }
 

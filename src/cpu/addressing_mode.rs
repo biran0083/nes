@@ -55,21 +55,13 @@ pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
             assert!(param <= 0xff);
             param as u8
         }
-        AddressingMode::ZeroPage => {
-            assert!(param <= 0xff);
-            cpu.mem[param as usize]
-        }
-        AddressingMode::ZeroPageX => {
-            assert!(param <= 0xff);
-            cpu.mem[(cpu.x.wrapping_add(param as u8)) as usize]
-        }
-        AddressingMode::Absolute => cpu.mem[param as usize],
-        AddressingMode::AbsoluteX => cpu.mem[(param.wrapping_add(cpu.x as u16)) as usize],
-        AddressingMode::AbsoluteY => cpu.mem[(param.wrapping_add(cpu.y as u16)) as usize],
+        AddressingMode::ZeroPage |
+        AddressingMode::ZeroPageX |
+        AddressingMode::Absolute |
+        AddressingMode::AbsoluteX |
+        AddressingMode::AbsoluteY |
         AddressingMode::IndexedIndirect => {
-            assert!(param <= 0xff);
-            let addr = (cpu.x.wrapping_add(param as u8)) as usize;
-            let addr = cpu.get_mem16(addr) as usize;
+            let addr = load_operand_addr(mode, cpu, param);
             cpu.mem[addr]
         }
         AddressingMode::IndirectIndexed => {
@@ -77,6 +69,34 @@ pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
             let addr = param as usize;
             let addr = cpu.get_mem16(addr) as usize;
             cpu.mem[addr].wrapping_add(cpu.y)
+        }
+    }
+}
+
+pub fn load_operand_addr(mode: AddressingMode, cpu: &CPU, param: u16) -> usize {
+    match mode {
+        AddressingMode::Accumulator|
+        AddressingMode::Relative |
+        AddressingMode::Immediate |
+        AddressingMode::IndirectIndexed |
+        AddressingMode::Implied => {
+            panic!("load_operand_addr should not be called for {:?} instruction", mode)
+        }
+        AddressingMode::ZeroPage => {
+            assert!(param <= 0xff);
+            param as usize
+        }
+        AddressingMode::ZeroPageX => {
+            assert!(param <= 0xff);
+            (cpu.x.wrapping_add(param as u8)) as usize
+        }
+        AddressingMode::Absolute => param as usize,
+        AddressingMode::AbsoluteX => (param.wrapping_add(cpu.x as u16)) as usize,
+        AddressingMode::AbsoluteY => (param.wrapping_add(cpu.y as u16)) as usize,
+        AddressingMode::IndexedIndirect => {
+            assert!(param <= 0xff);
+            let addr = (cpu.x.wrapping_add(param as u8)) as usize;
+            cpu.get_mem16(addr) as usize
         }
     }
 }

@@ -187,6 +187,15 @@ macro_rules! define_jump_inst {
     }
 }
 
+pub fn get_opcode(opcode_map: &[(u8, AddressingMode)], mode: AddressingMode) -> u8 {
+    for (op, m) in opcode_map {
+        if *m == mode {
+            return *op;
+        }
+    }
+    assert!(false, "opcode not found");
+    return 0;
+}
 
 #[macro_export]
 macro_rules! defube_cmp_inst {
@@ -213,17 +222,14 @@ macro_rules! defube_cmp_inst {
             use crate::cpu::test_util::Register8::*;
             use crate::cpu::test_util::Flag::*;
             use crate::cpu::addressing_mode::AddressingMode;
+            use crate::instructions::common::get_opcode;
             use super::OPCODE_MAP;
 
-            fn get_immediate_opcode() -> u8 {
-                assert_eq!(OPCODE_MAP[0].1, AddressingMode::Immediate);
-                OPCODE_MAP[0].0
-            }
 
             #[test]
             fn test_immediate() {
                 let mut runner = TestRunner::new();
-                let opcode = get_immediate_opcode();
+                let opcode = get_opcode(OPCODE_MAP, AddressingMode::Immediate);
                 runner.set($reg, 0x01);
                 runner.test(&[opcode, 0x01])
                     .verify(C, true)
@@ -246,9 +252,8 @@ macro_rules! defube_cmp_inst {
                     .verify(N, true);
             }
         }
-    };
+    }
 }
-
 lazy_static! {
 pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
@@ -278,6 +283,9 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(cmp),
         instruction_info!(cpx),
         instruction_info!(cpy),
+        instruction_info!(dec),
+        instruction_info!(dex),
+        instruction_info!(dey),
     ];
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
     for info in instructions.iter() {

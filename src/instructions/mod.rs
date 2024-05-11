@@ -25,4 +25,7 @@ mod clv;
 mod cmp;
 mod cpx;
 mod cpy;
+mod dec;
+mod dex;
+mod dey;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};
