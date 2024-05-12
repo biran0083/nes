@@ -429,7 +429,6 @@ lazy_static! {
 pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
         instruction_info!(tax),
-        instruction_info!(brk),
         instruction_info!(adc),
         instruction_info!(and),
         instruction_info!(asl),
@@ -440,6 +439,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(bmi),
         instruction_info!(bne),
         instruction_info!(bpl),
+        instruction_info!(brk),
         instruction_info!(bvc),
         instruction_info!(bvs),
         instruction_info!(clc),
@@ -465,6 +465,8 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(ldx),
         instruction_info!(ldy),
         instruction_info!(lsr),
+        instruction_info!(nop),
+        instruction_info!(ora),
     ];
 
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
