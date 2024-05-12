@@ -467,6 +467,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(lsr),
         instruction_info!(nop),
         instruction_info!(ora),
+        instruction_info!(pha),
     ];
 
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();

@@ -88,7 +88,7 @@ pub struct CPU {
     pub x: u8,
     pub y: u8,
     pub a: u8,
-    pub sp: u16,
+    pub sp: u8,
     pub pc: u16,
     pub flags: Flags,
     pub mem: Vec<u8>,
@@ -111,7 +111,7 @@ impl CPU {
         self.x = 0;
         self.y = 0;
         self.a = 0;
-        self.sp = 0x01ff;
+        self.sp = 0xff;
         self.flags = Flags::default();
         self.pc = self.get_mem16(0xFFFC);
     }
@@ -151,7 +151,7 @@ impl CPU {
         self.set_mem16(0xFFFC, start as u16);
         self.mem[start..(start + bytes.len())].copy_from_slice(bytes);
         self.pc = start as u16;
-        self.sp = 0x01ff;
+        self.sp = 0xff;
         //self.reset()
     }
 
@@ -176,8 +176,13 @@ impl CPU {
         }
     }
 
+    pub fn get_stack_top_addr(&self) -> usize {
+        0x100 + self.sp as usize
+    }
+
     pub fn push8(&mut self, value: u8) {
-        self.mem[self.sp as usize] = value;
+        let addr = self.get_stack_top_addr();
+        self.mem[addr] = value;
         self.sp -= 1;
     }
 
@@ -190,7 +195,7 @@ impl CPU {
 
     pub fn pop8(&mut self) -> u8 {
         self.sp += 1;
-        self.mem[self.sp as usize]
+        self.mem[self.get_stack_top_addr()]
     }
 
     pub fn pop16(&mut self) -> u16 {

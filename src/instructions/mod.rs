@@ -38,4 +38,5 @@ mod ldy;
 mod lsr;
 mod nop;
 mod ora;
+mod pha;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

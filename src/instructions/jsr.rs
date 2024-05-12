@@ -15,6 +15,7 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
 
 #[cfg(test)]
 mod tests {
+    use crate::cpu::test_util::Stack;
     use crate::cpu::test_util::TestRunner;
     use crate::cpu::test_util::Register16::*;
 
@@ -23,6 +24,7 @@ mod tests {
         let mut runner = TestRunner::new();
         runner.test(&[0x20, 0x12, 0x34])
             .verify(PC, 0x3412)
-            .verify_stack16(1, 0x8002);
+            .verify(Stack::new(1), 0x02)
+            .verify(Stack::new(2), 0x80);
     }
 }

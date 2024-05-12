@@ -9,9 +9,10 @@ pub enum Register8 {
     X,
     Y,
     A,
+    SP,
 }
 pub enum Register16 {
-    SP, PC
+    PC
 }
 
 pub enum Flag {
@@ -32,6 +33,18 @@ impl Mem {
     pub fn new(addr: usize) -> Self {
         Mem {
             addr
+        }
+    }
+}
+
+pub struct Stack {
+    offset: i16,
+}
+
+impl Stack {
+    pub fn new(offset: i16) -> Self {
+        Stack {
+            offset
         }
     }
 }
@@ -64,6 +77,12 @@ impl Retriever<u8> for Mem {
     }
 }
 
+impl Retriever<u8> for Stack {
+    fn get(&self, cpu: &CPU) -> u8 {
+        cpu.get_mem(cpu.get_stack_top_addr() + self.offset as usize)
+    }
+}
+
 pub trait Setter<T> {
     fn set(&self, cpu: &mut CPU, value: T);
 }
@@ -74,6 +93,7 @@ impl Setter<u8> for Register8 {
             Register8::X => cpu.x = value,
             Register8::Y => cpu.y = value,
             Register8::A => cpu.a = value,
+            Register8::SP => cpu.sp = value,
         }
     }
 }
@@ -81,7 +101,6 @@ impl Setter<u8> for Register8 {
 impl Setter<u16> for Register16 {
     fn set(&self, cpu: &mut CPU, value: u16) {
         match self {
-            Register16::SP => cpu.sp = value,
             Register16::PC => cpu.pc = value,
         }
     }
@@ -107,6 +126,12 @@ impl Setter<u8> for Mem {
     }
 }
 
+impl Setter<u8> for Stack {
+    fn set(&self, cpu: &mut CPU, value: u8) {
+        cpu.set_mem(cpu.get_stack_top_addr() + self.offset as usize, value);
+    }
+}
+
 pub trait Retriever<T> {
     fn get(&self, cpu: &CPU) -> T;
 }
@@ -117,6 +142,7 @@ impl Retriever<u8> for Register8 {
             Register8::X => cpu.x,
             Register8::Y => cpu.y,
             Register8::A => cpu.a,
+            Register8::SP => cpu.sp,
         }
     }
 }
@@ -124,7 +150,6 @@ impl Retriever<u8> for Register8 {
 impl Retriever<u16> for Register16 {
     fn get(&self, cpu: &CPU) -> u16 {
         match self {
-            Register16::SP => cpu.sp,
             Register16::PC => cpu.pc,
         }
     }
@@ -141,12 +166,12 @@ impl<'a> TestResult<'a> {
     }
 
     pub fn verify_stack(&self, offset: i16, value: u8) -> &Self {
-        assert_eq!(self.cpu.get_mem(self.cpu.sp as usize + offset as usize), value);
+        assert_eq!(self.cpu.get_mem(self.cpu.get_stack_top_addr() + offset as usize), value);
         self
     }
 
     pub fn verify_stack16(&self, offset: i16, value: u16) -> &Self {
-        assert_eq!(self.cpu.get_mem16(self.cpu.sp as usize + offset as usize), value);
+        assert_eq!(self.cpu.get_mem16(self.cpu.get_stack_top_addr() + offset as usize), value);
         self
     }
 }

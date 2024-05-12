@@ -1,4 +1,4 @@
-use crate::cpu::addressing_mode::{load_operand, AddressingMode};
+use crate::cpu::addressing_mode::AddressingMode;
 use super::InstFun;
 
 
