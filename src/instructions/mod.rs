@@ -1,5 +1,4 @@
 mod common;
-mod lda;
 mod tax;
 mod adc;
 mod brk;
@@ -33,4 +32,7 @@ mod inx;
 mod iny;
 mod jmp;
 mod jsr;
+mod lda;
+mod ldx;
+mod ldy;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

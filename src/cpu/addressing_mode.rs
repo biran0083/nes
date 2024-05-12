@@ -7,6 +7,7 @@ pub enum AddressingMode {
     Accumulator,
     ZeroPage,
     ZeroPageX,
+    ZeroPageY,
     Absolute,
     AbsoluteX,
     AbsoluteY,
@@ -26,6 +27,7 @@ impl AddressingMode {
             | AddressingMode::Relative
             | AddressingMode::ZeroPage
             | AddressingMode::ZeroPageX
+            | AddressingMode::ZeroPageY
             | AddressingMode::IndexedIndirect
             | AddressingMode::IndirectIndexed => Some(bytes[0] as u16),
             AddressingMode::Absolute
@@ -62,6 +64,7 @@ pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
         }
         AddressingMode::ZeroPage |
         AddressingMode::ZeroPageX |
+        AddressingMode::ZeroPageY |
         AddressingMode::Absolute |
         AddressingMode::AbsoluteX |
         AddressingMode::AbsoluteY |
@@ -97,6 +100,10 @@ pub fn load_operand_addr(mode: AddressingMode, cpu: &CPU, param: u16) -> usize {
         AddressingMode::ZeroPageX => {
             assert!(param <= 0xff);
             (cpu.x.wrapping_add(param as u8)) as usize
+        }
+        AddressingMode::ZeroPageY => {
+            assert!(param <= 0xff);
+            (cpu.y.wrapping_add(param as u8)) as usize
         }
         AddressingMode::Absolute => param as usize,
         AddressingMode::AbsoluteX => (param.wrapping_add(cpu.x as u16)) as usize,

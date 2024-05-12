@@ -29,7 +29,7 @@ mod test {
     #[test]
     fn test_zero_page() {
         let mut runner = TestRunner::new();
-        let op_code = get_opcode(OPCODE_MAP, AddressingMode::ZeroPage);
+        let op_code = get_opcode(OPCODE_MAP, AddressingMode::ZeroPage).unwrap();
         runner.set_mem(0x10, 0x23);
         runner.test(&[op_code, 0x10])
             .verify(Mem::new(0x10), 0x22)

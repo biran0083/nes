@@ -32,7 +32,7 @@ mod test {
     #[test]
     fn test_immediate() {
         let mut runner = TestRunner::new();
-        let op_code = get_opcode(OPCODE_MAP, AddressingMode::Immediate);
+        let op_code = get_opcode(OPCODE_MAP, AddressingMode::Immediate).unwrap();
         runner.set(A, 0x01);
         runner.test(&[op_code, 0x10])
             .verify(A, 0x11)

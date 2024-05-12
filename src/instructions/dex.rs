@@ -1,4 +1,4 @@
-use crate::cpu::addressing_mode::{load_operand_addr, AddressingMode};
+use crate::cpu::addressing_mode::AddressingMode;
 use super::InstFun;
 
 pub const RUN : InstFun = |ins, cpu| {
@@ -25,7 +25,7 @@ mod test {
     #[test]
     fn test() {
         let mut runner = TestRunner::new();
-        let op_code = get_opcode(OPCODE_MAP, AddressingMode::Implied);
+        let op_code = get_opcode(OPCODE_MAP, AddressingMode::Implied).unwrap();
         runner.set(X, 0x23);
         runner.test(&[op_code])
             .verify(X, 0x22)
