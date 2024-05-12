@@ -35,4 +35,5 @@ mod jsr;
 mod lda;
 mod ldx;
 mod ldy;
+mod lsr;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

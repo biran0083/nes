@@ -42,14 +42,6 @@ impl AddressingMode {
     }
 }
 
-
-pub fn load_operand_opt(mode: AddressingMode, cpu: &CPU, param: Option<u16>) -> u8 {
-    match mode {
-        AddressingMode::Accumulator => return cpu.a,
-        _ => load_operand(mode, cpu, param.unwrap())
-    }
-}
-
 pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
     match mode {
         AddressingMode::Indirect |
