@@ -41,4 +41,5 @@ mod ora;
 mod pha;
 mod php;
 mod pla;
+mod plp;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

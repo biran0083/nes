@@ -164,16 +164,6 @@ impl<'a> TestResult<'a> {
         assert_eq!(retriever.get(self.cpu), value);
         self
     }
-
-    pub fn verify_stack(&self, offset: i16, value: u8) -> &Self {
-        assert_eq!(self.cpu.get_mem(self.cpu.get_stack_top_addr() + offset as usize), value);
-        self
-    }
-
-    pub fn verify_stack16(&self, offset: i16, value: u16) -> &Self {
-        assert_eq!(self.cpu.get_mem16(self.cpu.get_stack_top_addr() + offset as usize), value);
-        self
-    }
 }
 
 impl TestRunner {
