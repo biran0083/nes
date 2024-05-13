@@ -137,10 +137,10 @@ macro_rules! define_flag_inst {
             fn test_brk() {
                 let mut runner = TestRunner::new();
                 runner.set($flag, !$value)
-                    .test(&[$opcode])
+                    .load_and_test(&[$opcode])
                     .verify($flag, $value);
                 runner.set($flag, $value)
-                    .test(&[$opcode])
+                    .load_and_test(&[$opcode])
                     .verify($flag, $value);
             }
         }
