@@ -5,8 +5,8 @@ fn helper<T>(ins: &Inst, cpu: &mut CPU, t: T)
         where T: Retriever<u8> + Setter<u8> {
     let c = if cpu.flags.c() { 1 } else { 0 };
     let old_value = t.get(cpu);
-    let value = old_value << 1 | c;
-    cpu.flags.set_c((old_value & 0x80) != 0);
+    let value = old_value >> 1 | c << 7;
+    cpu.flags.set_c((old_value & 0x01) != 0);
     t.set(cpu, value);
 
     cpu.flags.set_z(value == 0);
@@ -24,11 +24,11 @@ pub const RUN : InstFun = |ins, cpu| {
 };
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
-    (0x2A, AddressingMode::Accumulator),
-    (0x26, AddressingMode::ZeroPage),
-    (0x36, AddressingMode::ZeroPageX),
-    (0x2E, AddressingMode::Absolute),
-    (0x3E, AddressingMode::AbsoluteX),
+    (0x6A, AddressingMode::Accumulator),
+    (0x66, AddressingMode::ZeroPage),
+    (0x76, AddressingMode::ZeroPageX),
+    (0x6E, AddressingMode::Absolute),
+    (0x7E, AddressingMode::AbsoluteX),
 ];
 
 #[cfg(test)]

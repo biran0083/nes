@@ -43,4 +43,5 @@ mod php;
 mod pla;
 mod plp;
 mod rol;
+mod ror;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};
