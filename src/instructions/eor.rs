@@ -34,17 +34,17 @@ mod test {
         let mut runner = TestRunner::new();
         let op_code = get_opcode(OPCODE_MAP, AddressingMode::Immediate).unwrap();
         runner.set(A, 0x01);
-        runner.test(&[op_code, 0x10])
+        runner.load_and_test(&[op_code, 0x10])
             .verify(A, 0x11)
             .verify(Z, false)
             .verify(N, false);
         runner.set(A, 0x11);
-        runner.test(&[op_code, 0x11])
+        runner.load_and_test(&[op_code, 0x11])
             .verify(A, 0x00)
             .verify(Z, true)
             .verify(N, false);
         runner.set(A, 0xf0);
-        runner.test(&[op_code, 0x01])
+        runner.load_and_test(&[op_code, 0x01])
             .verify(A, 0xf1)
             .verify(Z, false)
             .verify(N, true);

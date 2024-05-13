@@ -31,17 +31,17 @@ mod test {
         let mut runner = TestRunner::new();
         let op_code = get_opcode(OPCODE_MAP, AddressingMode::ZeroPage).unwrap();
         runner.set_mem(0x10, 0x23);
-        runner.test(&[op_code, 0x10])
+        runner.load_and_test(&[op_code, 0x10])
             .verify(Mem::new(0x10), 0x22)
             .verify(Z, false)
             .verify(N, false);
         runner.set_mem(0x11, 0x1);
-        runner.test(&[op_code, 0x11])
+        runner.load_and_test(&[op_code, 0x11])
             .verify(Mem::new(0x11), 0)
             .verify(Z, true)
             .verify(N, false);
         runner.set_mem(0x12, 0);
-        runner.test(&[op_code, 0x12])
+        runner.load_and_test(&[op_code, 0x12])
             .verify(Mem::new(0x12), 0xff)
             .verify(Z, false)
             .verify(N, true);

@@ -152,7 +152,6 @@ impl CPU {
         self.mem[start..(start + bytes.len())].copy_from_slice(bytes);
         self.pc = start as u16;
         self.sp = 0xff;
-        //self.reset()
     }
 
     fn decode(&mut self) -> Inst {

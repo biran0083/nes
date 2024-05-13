@@ -18,18 +18,18 @@ mod test {
     #[test]
     fn test_inx() {
         let mut runner = TestRunner::new();
-        runner.test(&[0xC8])
+        runner.load_and_test(&[0xC8])
             .verify(Y, 1)
             .verify(Z, false)
             .verify(N, false);
 
         runner.set(Y, 0xff);
-        runner.test(&[0xC8])
+        runner.load_and_test(&[0xC8])
             .verify(Y, 0)
             .verify(Z, true)
             .verify(N, false);
         runner.set(Y, 0x7f);
-        runner.test(&[0xC8])
+        runner.load_and_test(&[0xC8])
             .verify(Y, 0x80)
             .verify(Z, false)
             .verify(N, true);

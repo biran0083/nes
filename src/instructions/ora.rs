@@ -30,17 +30,17 @@ mod test {
     fn test_immediate() {
         let mut runner = TestRunner::new();
         runner.set(A, 0x01);
-        runner.test(&[0x09, 0x10])
+        runner.load_and_test(&[0x09, 0x10])
             .verify(A, 0x11)
             .verify(Z, false)
             .verify(N, false);
         runner.set(A, 0xff);
-        runner.test(&[0x09, 0x00])
+        runner.load_and_test(&[0x09, 0x00])
             .verify(A, 0xff)
             .verify(Z, false)
             .verify(N, true);
         runner.set(A, 0);
-        runner.test(&[0x09, 0])
+        runner.load_and_test(&[0x09, 0])
             .verify(A, 0)
             .verify(Z, true)
             .verify(N, false);

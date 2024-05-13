@@ -202,9 +202,24 @@ impl TestRunner {
         self
     }
 
-    pub fn test(&mut self, inst: &[u8]) -> TestResult {
-        self.cpu.load_program(inst);
+    // push a byte to stack
+    pub fn push(&mut self, value: u8) -> &mut Self {
+        self.cpu.push8(value);
+        self
+    }
+
+    pub fn load_and_test(&mut self, inst: &[u8]) -> TestResult {
+        self.load_program(inst);
+        self.test()
+    }
+
+    pub fn load_program(&mut self, bytes: &[u8]) -> &mut Self {
+        self.cpu.load_program(bytes);
         self.cpu.pc = self.cpu.get_mem16(0xFFFC);
+        self
+    }
+
+    pub fn test(&mut self) -> TestResult {
         self.cpu.run_once();
         TestResult {
             cpu: &self.cpu

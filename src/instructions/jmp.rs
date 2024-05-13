@@ -20,7 +20,7 @@ mod tests {
     #[test]
     fn test_absolute() {
         let mut runner = TestRunner::new();
-        runner.test(&[0x4C, 0x12, 0x34])
+        runner.load_and_test(&[0x4C, 0x12, 0x34])
             .verify(PC, 0x3412);
     }
 
@@ -29,7 +29,7 @@ mod tests {
         let mut runner = TestRunner::new();
         runner
             .set_mem16(0x3412, 0x5678)
-            .test(&[0x6C, 0x12, 0x34])
+            .load_and_test(&[0x6C, 0x12, 0x34])
             .verify(PC, 0x5678);
     }
 }

@@ -28,13 +28,13 @@ mod test {
         let mut runner = TestRunner::new();
         runner.set(A, 0x80);
         runner.set_mem(0x0000, 0x00);
-        runner.test(&[0x2C, 0x00, 0x00])
+        runner.load_and_test(&[0x2C, 0x00, 0x00])
             .verify(Z, true)
             .verify(V, false)
             .verify(N, false);
         runner.set(A, 0x80);
         runner.set_mem(0x1234, 0xc0);
-        runner.test(&[0x2C, 0x34, 0x12])
+        runner.load_and_test(&[0x2C, 0x34, 0x12])
             .verify(Z, false)
             .verify(V, true)
             .verify(N, true);
@@ -45,13 +45,13 @@ mod test {
         let mut runner = TestRunner::new();
         runner.set(A, 0x80);
         runner.set_mem(0x00, 0x00);
-        runner.test(&[0x24, 0x00])
+        runner.load_and_test(&[0x24, 0x00])
             .verify(Z, true)
             .verify(V, false)
             .verify(N, false);
         runner.set(A, 0x80);
         runner.set_mem(0x01, 0xc0);
-        runner.test(&[0x24, 0x01])
+        runner.load_and_test(&[0x24, 0x01])
             .verify(Z, false)
             .verify(V, true)
             .verify(N, true);

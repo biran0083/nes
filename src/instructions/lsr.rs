@@ -41,13 +41,13 @@ mod test {
     fn test_accumulator() {
         let mut runner = TestRunner::new();
         runner.set(A, 0x01);
-        runner.test(&[0x4A])
+        runner.load_and_test(&[0x4A])
             .verify(A, 0)
             .verify(C, true)
             .verify(Z, true)
             .verify(N, false);
         runner.set(A, 0x80);
-        runner.test(&[0x4A])
+        runner.load_and_test(&[0x4A])
             .verify(A, 0x40)
             .verify(C, false)
             .verify(Z, false)
@@ -58,13 +58,13 @@ mod test {
     fn test_zero_page() {
         let mut runner = TestRunner::new();
         runner.set_mem(0x10, 0x01);
-        runner.test(&[0x46, 0x10])
+        runner.load_and_test(&[0x46, 0x10])
             .verify(Mem::new(0x10), 0)
             .verify(C, true)
             .verify(Z, true)
             .verify(N, false);
         runner.set_mem(0x11, 0x80);
-        runner.test(&[0x46, 0x11])
+        runner.load_and_test(&[0x46, 0x11])
             .verify(Mem::new(0x11), 0x40)
             .verify(C, false)
             .verify(Z, false)

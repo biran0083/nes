@@ -179,16 +179,16 @@ macro_rules! define_jump_inst {
                 let mut runner = TestRunner::new();
                 runner.set($flag, $value);
                 runner.set(PC, 0x8000);
-                runner.test(&[$opcode, 0x01])
+                runner.load_and_test(&[$opcode, 0x01])
                     .verify(PC, 0x8003);
                 runner.set(PC, 0x8000);
-                runner.test(&[$opcode, 0x80])
+                runner.load_and_test(&[$opcode, 0x80])
                     .verify(PC, 0x7f82);
                 runner.set(PC, 0x8000);
-                runner.test(&[$opcode, 0xff])
+                runner.load_and_test(&[$opcode, 0xff])
                     .verify(PC, 0x8001);
                 runner.set($flag, !$value);
-                runner.test(&[$opcode, 0xff])
+                runner.load_and_test(&[$opcode, 0xff])
                     .verify(PC, 0x8002);
             }
         }
@@ -238,22 +238,22 @@ macro_rules! defube_cmp_inst {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::Immediate).unwrap();
                 runner.set($reg, 0x01);
-                runner.test(&[opcode, 0x01])
+                runner.load_and_test(&[opcode, 0x01])
                     .verify(C, true)
                     .verify(Z, true)
                     .verify(N, false);
                 runner.set($reg, 0xff);
-                runner.test(&[opcode, 0x00])
+                runner.load_and_test(&[opcode, 0x00])
                     .verify(C, true)
                     .verify(Z, false)
                     .verify(N, true);
                 runner.set($reg, 0x03);
-                runner.test(&[opcode, 0x02])
+                runner.load_and_test(&[opcode, 0x02])
                     .verify(C, true)
                     .verify(Z, false)
                     .verify(N, false);
                 runner.set($reg, 0x02);
-                runner.test(&[opcode, 0x03])
+                runner.load_and_test(&[opcode, 0x03])
                     .verify(C, false)
                     .verify(Z, false)
                     .verify(N, true);
@@ -294,15 +294,15 @@ macro_rules! define_ld_inst {
             fn test_immediate() {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::Immediate).unwrap();
-                runner.test(&[opcode, 0x00])
+                runner.load_and_test(&[opcode, 0x00])
                     .verify($reg, 0)
                     .verify(Z, true)
                     .verify(N, false);
-                runner.test(&[opcode, 0x01])
+                runner.load_and_test(&[opcode, 0x01])
                     .verify($reg, 1)
                     .verify(Z, false)
                     .verify(N, false);
-                runner.test(&[opcode, 0x91])
+                runner.load_and_test(&[opcode, 0x91])
                     .verify($reg, 0x91)
                     .verify(Z, false)
                     .verify(N, true);
@@ -312,17 +312,17 @@ macro_rules! define_ld_inst {
             fn test_zero_page() {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::ZeroPage).unwrap();
-                runner.test(&[opcode, 0x01])
+                runner.load_and_test(&[opcode, 0x01])
                     .verify($reg, 0)
                     .verify(Z, true)
                     .verify(N, false);
                 runner.set_mem(0x01, 10);
-                runner.test(&[opcode, 0x01])
+                runner.load_and_test(&[opcode, 0x01])
                     .verify($reg, 10)
                     .verify(Z, false)
                     .verify(N, false);
                 runner.set_mem(0x01, 0xff);
-                runner.test(&[opcode, 0x01])
+                runner.load_and_test(&[opcode, 0x01])
                     .verify($reg, 0xff)
                     .verify(Z, false)
                     .verify(N, true);
@@ -333,21 +333,21 @@ macro_rules! define_ld_inst {
                 let mut runner = TestRunner::new();
                 if let Some(opcode) = get_opcode(OPCODE_MAP, AddressingMode::ZeroPageX) {
                     runner.set_mem(0x01, 0x00);
-                    runner.test(&[opcode, 0x01])
+                    runner.load_and_test(&[opcode, 0x01])
                         .verify($reg, 0)
                         .verify(Z, true)
                         .verify(N, false);
                     runner.set(X, 2);
 
                     runner.set_mem(0x03, 10);
-                    runner.test(&[opcode, 0x01])
+                    runner.load_and_test(&[opcode, 0x01])
                         .verify($reg, 10)
                         .verify(Z, false)
                         .verify(N, false);
 
                     runner.set(X, 0x80);
                     runner.set_mem(0x7f, 0xff);
-                    runner.test(&[opcode, 0xff])
+                    runner.load_and_test(&[opcode, 0xff])
                         .verify($reg, 0xff)
                         .verify(Z, false)
                         .verify(N, true);
@@ -359,7 +359,7 @@ macro_rules! define_ld_inst {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::Absolute).unwrap();
                 runner.set_mem(0x1234, 0x11);
-                runner.test(&[opcode, 0x34, 0x12])
+                runner.load_and_test(&[opcode, 0x34, 0x12])
                     .verify($reg, 0x11)
                     .verify(Z, false)
                     .verify(N, false);
@@ -371,7 +371,7 @@ macro_rules! define_ld_inst {
                 if let Some(opcode) = get_opcode(OPCODE_MAP, AddressingMode::AbsoluteX) {
                     runner.set_mem(0x1235, 0xf0);
                     runner.set(X, 1);
-                    runner.test(&[opcode, 0x34, 0x12])
+                    runner.load_and_test(&[opcode, 0x34, 0x12])
                         .verify($reg, 0xf0)
                         .verify(Z, false)
                         .verify(N, true);
@@ -384,7 +384,7 @@ macro_rules! define_ld_inst {
                 if let Some(opcode) = get_opcode(OPCODE_MAP, AddressingMode::AbsoluteY) {
                     runner.set_mem(0x1236, 0x13);
                     runner.set(Y, 2);
-                    runner.test(&[opcode, 0x34, 0x12])
+                    runner.load_and_test(&[opcode, 0x34, 0x12])
                         .verify($reg, 0x13)
                         .verify(Z, false)
                         .verify(N, false);
@@ -399,7 +399,7 @@ macro_rules! define_ld_inst {
                     runner.set_mem(0x21, 0x12);
                     runner.set_mem(0x22, 0x34);
                     runner.set_mem(0x3412, 0x56);
-                    runner.test(&[opcode, 0x10])
+                    runner.load_and_test(&[opcode, 0x10])
                         .verify($reg, 0x56)
                         .verify(Z, false)
                         .verify(N, false);
@@ -414,7 +414,7 @@ macro_rules! define_ld_inst {
                     runner.set_mem(0x10, 0x45);
                     runner.set_mem(0x11, 0x23);
                     runner.set_mem(0x2345, 0xff);
-                    runner.test(&[opcode, 0x10])
+                    runner.load_and_test(&[opcode, 0x10])
                         .verify($reg, 0x0e)
                         .verify(Z, false)
                         .verify(N, false);
@@ -468,6 +468,8 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(nop),
         instruction_info!(ora),
         instruction_info!(pha),
+        instruction_info!(php),
+        instruction_info!(pla),
     ];
 
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();

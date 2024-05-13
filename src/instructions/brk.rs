@@ -25,7 +25,7 @@ mod tests {
         let mut runner = TestRunner::new();
         let old_flag = runner.get(Flags{});
         runner.set_mem16(0xfffe, 0x1234)
-            .test(&[0x00])
+            .load_and_test(&[0x00])
             .verify(B, true)
             .verify(PC, 0x1234)
             .verify(Stack::new(1), old_flag)
