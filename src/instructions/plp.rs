@@ -14,7 +14,7 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
 #[cfg(test)]
 mod test {
     use crate::cpu::test_util::TestRunner;
-    use crate::cpu::test_util::Flags;
+    use crate::cpu::Flags;
 
     #[test]
     fn test() {

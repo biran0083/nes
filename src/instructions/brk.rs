@@ -14,11 +14,11 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[(0x00, AddressingMode::Implied
 
 #[cfg(test)]
 mod tests {
-    use crate::cpu::test_util::Stack;
+    use crate::cpu::Stack;
     use crate::cpu::test_util::TestRunner;
-    use crate::cpu::test_util::Register16::*;
-    use crate::cpu::test_util::Flag::*;
-    use crate::cpu::test_util::Flags;
+    use crate::cpu::Register16::*;
+    use crate::cpu::Flag::*;
+    use crate::cpu::Flags;
 
     #[test]
     fn test_brk() {

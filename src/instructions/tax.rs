@@ -14,8 +14,8 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[(0xaa, AddressingMode::Implied
 #[cfg(test)]
 mod test {
     use crate::cpu::test_util::TestRunner;
-    use crate::cpu::test_util::Flag::*;
-    use crate::cpu::test_util::Register8::*;
+    use crate::cpu::Flag::*;
+    use crate::cpu::Register8::*;
 
     #[test]
     fn test_tax() {

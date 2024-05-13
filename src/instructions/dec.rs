@@ -21,8 +21,8 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
 mod test {
     use crate::cpu::addressing_mode::AddressingMode;
     use crate::cpu::test_util::TestRunner;
-    use crate::cpu::test_util::Mem;
-    use crate::cpu::test_util::Flag::*;
+    use crate::cpu::Mem;
+    use crate::cpu::Flag::*;
     use crate::instructions::common::get_opcode;
     use super::OPCODE_MAP;
 

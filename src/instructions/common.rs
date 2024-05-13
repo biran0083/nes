@@ -119,8 +119,8 @@ macro_rules! define_flag_inst {
     ($opcode: expr, $flag: expr, $value: expr) => {
         use crate::cpu::addressing_mode::AddressingMode;
         use super::InstFun;
-        use crate::cpu::test_util::Flag::*;
-        use crate::cpu::test_util::Setter;
+        use crate::cpu::Flag::*;
+        use crate::cpu::Setter;
 
         pub const RUN : InstFun = |ins, cpu| {
             $flag.set(cpu, $value);
@@ -131,7 +131,7 @@ macro_rules! define_flag_inst {
         #[cfg(test)]
         mod tests {
             use crate::cpu::test_util::TestRunner;
-            use crate::cpu::test_util::Flag::*;
+            use crate::cpu::Flag::*;
 
             #[test]
             fn test_brk() {
@@ -153,8 +153,8 @@ macro_rules! define_jump_inst {
         use crate::cpu::addressing_mode::{load_operand, AddressingMode};
         use crate::cpu::CPU;
         use super::InstFun;
-        use crate::cpu::test_util::Flag::*;
-        use crate::cpu::test_util::Retriever;
+        use crate::cpu::Flag::*;
+        use crate::cpu::Retriever;
 
         pub const RUN : InstFun = |ins, cpu: &mut CPU| {
             let operand : i8 = load_operand(ins.mode, cpu, ins.param.unwrap()) as i8;
@@ -171,8 +171,8 @@ macro_rules! define_jump_inst {
         #[cfg(test)]
         mod test {
             use crate::cpu::test_util::TestRunner;
-            use crate::cpu::test_util::Register16::*;
-            use crate::cpu::test_util::Flag::*;
+            use crate::cpu::Register16::*;
+            use crate::cpu::Flag::*;
 
             #[test]
             fn test_relative() {
@@ -207,10 +207,10 @@ pub fn get_opcode(opcode_map: &[(u8, AddressingMode)], mode: AddressingMode) -> 
 #[macro_export]
 macro_rules! defube_cmp_inst {
     ($reg: expr, $opcode_map: expr) => {
-        use crate::cpu::{addressing_mode::{load_operand, AddressingMode}, test_util::{Flag, Setter}};
+        use crate::cpu::{addressing_mode::{load_operand, AddressingMode}, Flag, Setter};
         use super::InstFun;
-        use crate::cpu::test_util::Register8::*;
-        use crate::cpu::test_util::Retriever;
+        use crate::cpu::Register8::*;
+        use crate::cpu::Retriever;
 
         pub const RUN : InstFun = |ins, cpu| {
             let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
@@ -226,8 +226,8 @@ macro_rules! defube_cmp_inst {
         #[cfg(test)]
         mod test {
             use crate::cpu::test_util::TestRunner;
-            use crate::cpu::test_util::Register8::*;
-            use crate::cpu::test_util::Flag::*;
+            use crate::cpu::Register8::*;
+            use crate::cpu::Flag::*;
             use crate::cpu::addressing_mode::AddressingMode;
             use crate::instructions::common::get_opcode;
             use super::OPCODE_MAP;
@@ -268,8 +268,8 @@ macro_rules! define_ld_inst {
         use crate::cpu::addressing_mode::{load_operand, AddressingMode};
         use crate::cpu::CPU;
         use super::InstFun;
-        use crate::cpu::test_util::Register8::*;
-        use crate::cpu::test_util::Setter;
+        use crate::cpu::Register8::*;
+        use crate::cpu::Setter;
 
         pub const RUN : InstFun = |ins, cpu: &mut CPU| {
             let value = load_operand(ins.mode, cpu, ins.param.unwrap());
@@ -284,8 +284,8 @@ macro_rules! define_ld_inst {
         #[cfg(test)]
         mod test {
             use crate::cpu::test_util::TestRunner;
-            use crate::cpu::test_util::Register8::*;
-            use crate::cpu::test_util::Flag::*;
+            use crate::cpu::Register8::*;
+            use crate::cpu::Flag::*;
             use super::OPCODE_MAP;
             use crate::cpu::addressing_mode::AddressingMode;
             use crate::instructions::common::get_opcode;

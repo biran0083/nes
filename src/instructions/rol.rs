@@ -1,4 +1,4 @@
-use crate::cpu::{addressing_mode::{load_operand_addr, AddressingMode}, test_util::{Mem, Register8, Retriever, Setter}, CPU};
+use crate::cpu::{addressing_mode::{load_operand_addr, AddressingMode}, Mem, Register8, Retriever, Setter, CPU};
 use super::{Inst, InstFun};
 
 fn helper<T>(ins: &Inst, cpu: &mut CPU, t: T)
@@ -33,10 +33,10 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
 
 #[cfg(test)]
 mod test {
-    use crate::cpu::test_util::Mem;
+    use crate::cpu::Mem;
     use crate::cpu::test_util::TestRunner;
-    use crate::cpu::test_util::Flag::*;
-    use crate::cpu::test_util::Register8::*;
+    use crate::cpu::Flag::*;
+    use crate::cpu::Register8::*;
 
     #[test]
     fn test_accumulate() {
