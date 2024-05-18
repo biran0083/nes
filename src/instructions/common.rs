@@ -425,6 +425,41 @@ macro_rules! define_ld_inst {
     };
 }
 
+#[macro_export]
+macro_rules! define_st_inst {
+    ($reg: expr, $opcode_map: expr) => {
+        use crate::cpu::addressing_mode::{load_operand_addr, AddressingMode};
+        use super::InstFun;
+        use crate::cpu::Register8::*;
+        use crate::cpu::Retriever;
+
+        pub const RUN : InstFun = |ins, cpu| {
+            let addr = load_operand_addr(ins.mode, cpu, ins.param.unwrap());
+            cpu.set_mem(addr, $reg.get(cpu));
+            cpu.pc += ins.len();
+        };
+
+        pub const OPCODE_MAP: &[(u8, AddressingMode)] = $opcode_map;
+
+        #[cfg(test)]
+        mod tests {
+            use crate::cpu::test_util::TestRunner;
+            use crate::cpu::Mem;
+            use super::*;
+            use crate::instructions::common::get_opcode;
+
+            #[test]
+            fn test_brk() {
+                let mut runner = TestRunner::new();
+                let opcode = get_opcode(OPCODE_MAP, AddressingMode::ZeroPage).unwrap();
+                runner.set($reg, 0x34)
+                    .load_and_test(&[opcode, 0x12])
+                    .verify(Mem::new(0x12), 0x34);
+            }
+        }
+    };
+}
+
 lazy_static! {
 pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
@@ -443,11 +478,8 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(bvc),
         instruction_info!(bvs),
         instruction_info!(clc),
-        instruction_info!(sec),
         instruction_info!(cld),
-        instruction_info!(sed),
         instruction_info!(cli),
-        instruction_info!(sei),
         instruction_info!(clv),
         instruction_info!(cmp),
         instruction_info!(cpx),
@@ -476,6 +508,12 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(rti),
         instruction_info!(rts),
         instruction_info!(sbc),
+        instruction_info!(sec),
+        instruction_info!(sed),
+        instruction_info!(sei),
+        instruction_info!(sta),
+        instruction_info!(stx),
+        instruction_info!(sty),
     ];
 
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
