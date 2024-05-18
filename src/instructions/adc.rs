@@ -1,16 +1,10 @@
-use crate::cpu::addressing_mode::{load_operand, AddressingMode};
-use super::InstFun;
+use crate::cpu::{addressing_mode::{load_operand, AddressingMode}, CPU};
+use super::{common::adc_helper, InstFun};
 
 
 pub const RUN : InstFun = |ins, cpu| {
     let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
-    let result16 = cpu.a as u16 + operand as u16 + cpu.flags.c() as u16;
-    let result = result16 as u8;
-    cpu.flags.set_c((result16 >> 8) & 1 != 0);
-    cpu.flags.set_v((cpu.a ^ result) & (operand ^ result) & 0x80 != 0);
-    cpu.a = result;
-    cpu.update_z(cpu.a);
-    cpu.update_n(cpu.a);
+    adc_helper(cpu.a, operand, cpu);
     cpu.pc += ins.len();
 };
 

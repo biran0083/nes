@@ -13,7 +13,7 @@ pub struct TestResult<'a> {
 
 impl<'a> TestResult<'a> {
     pub fn verify<T: PartialEq + std::fmt::Debug>(&self, retriever: impl Retriever<T>, value: T) -> &Self {
-        assert_eq!(retriever.get(self.cpu), value);
+        assert_eq!(retriever.get(self.cpu), value, "Failed to verify {:?}", retriever);
         self
     }
 }

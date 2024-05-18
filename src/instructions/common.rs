@@ -475,6 +475,7 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(ror),
         instruction_info!(rti),
         instruction_info!(rts),
+        instruction_info!(sbc),
     ];
 
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
@@ -511,4 +512,14 @@ pub fn disassemble(bytes: &[u8]) -> Vec<Inst> {
         }
     }
     res
+}
+
+pub fn adc_helper(a: u8, b: u8, cpu: &mut CPU) {
+    let result16 = a as u16 + b as u16 + cpu.flags.c() as u16;
+    let result = result16 as u8;
+    cpu.flags.set_c((result16 >> 8) & 1 != 0);
+    cpu.flags.set_v((a ^ result) & (b ^ result) & 0x80 != 0);
+    cpu.a = result;
+    cpu.update_z(cpu.a);
+    cpu.update_n(cpu.a);
 }

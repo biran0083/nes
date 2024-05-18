@@ -46,4 +46,5 @@ mod rol;
 mod ror;
 mod rti;
 mod rts;
+mod sbc;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

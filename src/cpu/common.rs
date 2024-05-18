@@ -1,6 +1,7 @@
 use super::CPU;
 
 
+#[derive(Debug)]
 pub enum Register8 {
     X,
     Y,
@@ -8,10 +9,12 @@ pub enum Register8 {
     SP,
 }
 
+#[derive(Debug)]
 pub enum Register16 {
     PC
 }
 
+#[derive(Debug)]
 pub enum Flag {
     C,
     Z,
@@ -22,6 +25,7 @@ pub enum Flag {
     N,
 }
 
+#[derive(Debug)]
 pub struct Mem {
     addr: usize,
 }
@@ -34,6 +38,7 @@ impl Mem {
     }
 }
 
+#[derive(Debug)]
 pub struct Stack {
     offset: i16,
 }
@@ -46,6 +51,7 @@ impl Stack {
     }
 }
 
+#[derive(Debug)]
 pub struct Flags {}
 
 impl Retriever<u8> for Flags {
@@ -129,7 +135,7 @@ impl Setter<u8> for Stack {
     }
 }
 
-pub trait Retriever<T> {
+pub trait Retriever<T> : std::fmt::Debug {
     fn get(&self, cpu: &CPU) -> T;
 }
 
