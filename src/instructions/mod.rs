@@ -1,5 +1,4 @@
 mod common;
-mod tax;
 mod adc;
 mod and;
 mod asl;
@@ -50,4 +49,10 @@ mod sei;
 mod sta;
 mod stx;
 mod sty;
+mod tax;
+mod tay;
+mod tsx;
+mod txa;
+mod txs;
+mod tya;
 pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};

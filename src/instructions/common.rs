@@ -460,10 +460,65 @@ macro_rules! define_st_inst {
     };
 }
 
+#[macro_export]
+macro_rules! define_t_inst {
+    ($src: expr, $dst: expr, $opcode_map: expr) => {
+        use crate::cpu::addressing_mode::AddressingMode;
+        use super::InstFun;
+        use crate::cpu::Register8::*;
+        use crate::cpu::Retriever;
+        use crate::cpu::Setter;
+
+        pub const RUN : InstFun = |ins, cpu| {
+            let value = $src.get(cpu);
+            $dst.set(cpu, value);
+            cpu.update_z(value);
+            cpu.update_n(value);
+            cpu.pc += ins.len();
+        };
+
+        pub const OPCODE_MAP: &[(u8, AddressingMode)] = $opcode_map;
+
+        #[cfg(test)]
+        mod test {
+            use crate::cpu::test_util::TestRunner;
+            use crate::cpu::Flag::*;
+            use crate::cpu::Register8::*;
+            use super::*;
+            use crate::instructions::common::get_opcode;
+
+            #[test]
+            fn test() {
+                let mut runner = TestRunner::new();
+                let opcode = get_opcode(OPCODE_MAP, AddressingMode::Implied).unwrap();
+                runner.load_program(&[opcode]);
+                runner.set($src, 0x21);
+                runner.test()
+                    .verify($dst, 0x21)
+                    .verify(Z, false)
+                    .verify(N, false);
+
+                runner.load_program(&[opcode]);
+                runner.set($src, 0);
+                runner.test()
+                    .verify($dst, 0)
+                    .verify(Z, true)
+                    .verify(N, false);
+
+                runner.load_program(&[opcode]);
+                runner.set($src, 0xf0);
+                runner.test()
+                    .verify($dst, 0xf0)
+                    .verify(Z, false)
+                    .verify(N, true);
+            }
+        }
+    };
+}
+
 lazy_static! {
 pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
     let instructions = &[
-        instruction_info!(tax),
         instruction_info!(adc),
         instruction_info!(and),
         instruction_info!(asl),
@@ -514,6 +569,12 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
         instruction_info!(sta),
         instruction_info!(stx),
         instruction_info!(sty),
+        instruction_info!(tax),
+        instruction_info!(tay),
+        instruction_info!(tsx),
+        instruction_info!(txa),
+        instruction_info!(txs),
+        instruction_info!(tya),
     ];
 
     let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();

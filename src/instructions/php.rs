@@ -2,6 +2,7 @@ use crate::cpu::addressing_mode::AddressingMode;
 use super::InstFun;
 
 pub const RUN : InstFun = |ins, cpu| {
+    cpu.flags.set_b(true);
     cpu.push8(cpu.flags.get());
     cpu.pc += ins.len();
 };
@@ -23,8 +24,8 @@ mod test {
         let mut runner = TestRunner::new();
         runner.set(C, true);
         runner.set(N, true);
-        let value = runner.get(Flags{});
-
+        // set B flag
+        let value = runner.get(Flags{}) | 0x10;
         runner.load_and_test(&[0x08])
             .verify(Stack::new(1), value)
             .verify(SP, 0xfe);

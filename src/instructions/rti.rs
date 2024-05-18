@@ -1,7 +1,7 @@
-use crate::cpu::addressing_mode::{load_operand, AddressingMode};
+use crate::cpu::addressing_mode::AddressingMode;
 use super::InstFun;
 
-pub const RUN : InstFun = |ins, cpu| {
+pub const RUN : InstFun = |_, cpu| {
     let flags = cpu.pop8();
     let pc = cpu.pop16();
     cpu.flags.set(flags);
