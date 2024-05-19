@@ -147,7 +147,6 @@ impl CPU {
 
     pub fn load_program(&mut self, bytes: &[u8], start: usize) {
         assert!(bytes.len() < 0x8000);
-        let start: usize = 0x8000;
         self.set_mem16(0xFFFC, start as u16);
         self.mem[start..(start + bytes.len())].copy_from_slice(bytes);
         self.pc = start as u16;

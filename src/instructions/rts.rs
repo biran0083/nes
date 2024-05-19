@@ -1,13 +1,13 @@
-use crate::cpu::addressing_mode::{load_operand, AddressingMode};
+use crate::cpu::addressing_mode::AddressingMode;
 use super::InstFun;
 
-pub const RUN : InstFun = |ins, cpu| {
+pub const RUN : InstFun = |_, cpu| {
     let pc = cpu.pop16();
     cpu.pc = pc + 1;
 };
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
-        (0x60, AddressingMode::Immediate),
+        (0x60, AddressingMode::Implied),
     ];
 
 #[cfg(test)]

@@ -10,6 +10,7 @@ pub enum Register8 {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum Register16 {
     PC
 }
@@ -20,6 +21,7 @@ pub enum Flag {
     Z,
     I,
     D,
+    #[allow(dead_code)]
     B,
     V,
     N,
@@ -44,6 +46,7 @@ pub struct Stack {
 }
 
 impl Stack {
+    #[allow(dead_code)]
     pub fn new(offset: i16) -> Self {
         Stack {
             offset

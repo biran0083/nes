@@ -195,6 +195,7 @@ macro_rules! define_jump_inst {
     }
 }
 
+#[cfg(test)]
 pub fn get_opcode(opcode_map: &[(u8, AddressingMode)], mode: AddressingMode) -> Option<u8> {
     for (op, m) in opcode_map {
         if *m == mode {
@@ -597,20 +598,40 @@ pub static ref INST_FACTORIES: HashMap<u8, InstFactory> = {
 };
 }
 
-pub fn disassemble(bytes: &[u8]) -> Vec<Inst> {
-    let mut res = vec![];
-    let mut idx = 0;
-    while idx < bytes.len() {
-        let op = bytes[idx];
+pub struct InstIter {
+    bytes: Vec<u8>,
+    idx: usize,
+}
+
+impl InstIter {
+    pub fn new(bytes: &[u8]) -> Self {
+        InstIter {
+            bytes: bytes.to_vec(),
+            idx: 0,
+        }
+    }
+}
+
+impl Iterator for InstIter {
+    type Item = Inst;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx >= self.bytes.len() {
+            return None;
+        }
+        let op = self.bytes[self.idx];
         if let Some(factory) = INST_FACTORIES.get(&op) {
-            let inst = factory.make(&bytes[(idx + 1)..]);
-            idx += inst.len() as usize;
-            res.push(inst);
+            let inst = factory.make(&self.bytes[(self.idx + 1)..]);
+            self.idx += inst.len() as usize;
+            Some(inst)
         } else {
             panic!("unknown op code: {:#x}", op);
         }
     }
-    res
+}
+
+pub fn disassemble(bytes: &[u8]) -> InstIter {
+    InstIter::new(bytes)
 }
 
 pub fn adc_helper(a: u8, b: u8, cpu: &mut CPU) {

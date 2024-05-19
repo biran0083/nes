@@ -1,4 +1,4 @@
-use crate::cpu::{addressing_mode::{load_operand, AddressingMode}, CPU};
+use crate::cpu::addressing_mode::{load_operand, AddressingMode};
 use super::{common::adc_helper, InstFun};
 
 
