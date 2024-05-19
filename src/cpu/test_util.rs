@@ -56,7 +56,7 @@ impl TestRunner {
     }
 
     pub fn load_program(&mut self, bytes: &[u8]) -> &mut Self {
-        self.cpu.load_program(bytes);
+        self.cpu.load_program(bytes, 0x8000);
         self.cpu.pc = self.cpu.get_mem16(0xFFFC);
         self
     }

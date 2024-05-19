@@ -145,7 +145,7 @@ impl CPU {
         self.flags.set_n(value & 0x80 != 0);
     }
 
-    pub fn load_program(&mut self, bytes: &[u8]) {
+    pub fn load_program(&mut self, bytes: &[u8], start: usize) {
         assert!(bytes.len() < 0x8000);
         let start: usize = 0x8000;
         self.set_mem16(0xFFFC, start as u16);
@@ -167,8 +167,8 @@ impl CPU {
         ins.run(self);
     }
 
-    pub fn load_and_run(&mut self, bytes: &[u8]) {
-        self.load_program(bytes);
+    pub fn load_and_run(&mut self, bytes: &[u8], start: usize) {
+        self.load_program(bytes, start);
         self.reset();
         loop {
             self.run_once();
