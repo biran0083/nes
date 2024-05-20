@@ -1,6 +1,6 @@
 use crate::cpu::CPU;
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Hash, Eq)]
 pub enum AddressingMode {
     Implied,
     Immediate,
@@ -18,6 +18,23 @@ pub enum AddressingMode {
 }
 
 impl AddressingMode {
+    pub fn get_inst_size(&self) -> u16 {
+        match *self {
+            AddressingMode::Implied |
+            AddressingMode::Accumulator => 1,
+            AddressingMode::Immediate |
+            AddressingMode::ZeroPage |
+            AddressingMode::ZeroPageX |
+            AddressingMode::ZeroPageY |
+            AddressingMode::IndexedIndirect |
+            AddressingMode::IndirectIndexed |
+            AddressingMode::Relative => 2,
+            AddressingMode::Absolute |
+            AddressingMode::AbsoluteX |
+            AddressingMode::AbsoluteY |
+            AddressingMode::Indirect => 3,
+        }
+    }
 
     pub fn read_param(&self,  bytes: &[u8]) -> Option<u16> {
         match *self {

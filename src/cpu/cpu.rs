@@ -1,4 +1,4 @@
-use crate::instructions::{Inst, INST_FACTORIES};
+use crate::instructions::{Inst, INST_FACTORIES_BY_OP_CODE};
 
 #[derive(Default)]
 pub struct Flags {
@@ -155,7 +155,7 @@ impl CPU {
 
     fn decode(&mut self) -> Inst {
         let op = self.mem[self.pc as usize];
-        INST_FACTORIES
+        INST_FACTORIES_BY_OP_CODE
             .get(&op)
             .unwrap()
             .make(&self.mem[((self.pc + 1) as usize)..])

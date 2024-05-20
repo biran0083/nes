@@ -55,4 +55,4 @@ mod tsx;
 mod txa;
 mod txs;
 mod tya;
-pub use common::{Inst, InstFun, INST_FACTORIES, disassemble};
+pub use common::{Inst, InstFun, INST_FACTORIES_BY_OP_CODE, INST_FACTORIES_BY_NAME_MODE, disassemble};
