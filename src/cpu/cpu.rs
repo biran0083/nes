@@ -170,11 +170,11 @@ impl CPU {
         Ok(())
     }
 
-    pub fn load_and_run(&mut self, bytes: &[u8], start: usize) -> Result<(), NesError> {
-        self.load_program(bytes, start);
-        self.reset();
+    pub fn run_with_callback<F>(&mut self, mut f: F) -> Result<(), NesError>
+        where F: FnMut(&mut CPU) {
         loop {
             self.run_once()?;
+            f(self);
         }
     }
 

@@ -681,11 +681,11 @@ pub fn disassemble(bytes: &[u8]) -> InstIter {
     InstIter::new(bytes)
 }
 
-pub fn adc_helper(a: u8, b: u8, cpu: &mut CPU) {
-    let result16 = a as u16 + b as u16 + cpu.flags.c() as u16;
+pub fn adc_helper(b: u8, cpu: &mut CPU) {
+    let result16 = cpu.a as u16 + b as u16 + cpu.flags.c() as u16;
     let result = result16 as u8;
     cpu.flags.set_c((result16 >> 8) & 1 != 0);
-    cpu.flags.set_v((a ^ result) & (b ^ result) & 0x80 != 0);
+    cpu.flags.set_v((cpu.a ^ result) & (b ^ result) & 0x80 != 0);
     cpu.a = result;
     cpu.update_z(cpu.a);
     cpu.update_n(cpu.a);

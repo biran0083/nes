@@ -4,7 +4,7 @@ use super::{common::adc_helper, InstFun};
 
 pub const RUN : InstFun = |ins, cpu| {
     let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
-    adc_helper(cpu.a, !operand, cpu);
+    adc_helper(!operand, cpu);
     cpu.pc += ins.len();
 };
 
@@ -78,13 +78,22 @@ mod test {
             .verify(V, true)
             .verify(N, false);
 
-        runner.set(A, 0x01);
-        runner.set(C, false);
-        runner.load_and_test(&[0xE9, 0x01])
-            .verify(A, 0xff)
-            .verify(C, false)
-            .verify(Z, false)
-            .verify(V, false)
-            .verify(N, true);
+            runner.set(A, 0x01);
+            runner.set(C, false);
+            runner.load_and_test(&[0xE9, 0x01])
+                .verify(A, 0xff)
+                .verify(C, false)
+                .verify(Z, false)
+                .verify(V, false)
+                .verify(N, true);
+
+            runner.set(A, 0xDB);
+            runner.set(C, true);
+            runner.load_and_test(&[0xE9, 0x20])
+                .verify(A, 0xBB)
+                .verify(C, true)
+                .verify(Z, false)
+                .verify(V, false)
+                .verify(N, true);
     }
 }

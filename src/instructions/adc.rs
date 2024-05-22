@@ -4,7 +4,7 @@ use super::{common::adc_helper, InstFun};
 
 pub const RUN : InstFun = |ins, cpu| {
     let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
-    adc_helper(cpu.a, operand, cpu);
+    adc_helper(operand, cpu);
     cpu.pc += ins.len();
 };
 
