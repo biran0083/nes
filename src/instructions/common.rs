@@ -59,7 +59,7 @@ impl std::fmt::Debug for Inst {
             AddressingMode::Accumulator => write!(f, "{} A", self.name),
             AddressingMode::Relative|
             AddressingMode::Immediate => write!(f, "{} #${:02x}", self.name, self.param.unwrap()),
-            AddressingMode::ZeroPage => write!(f, "{} ${:02x}, X", self.name, self.param.unwrap()),
+            AddressingMode::ZeroPage => write!(f, "{} ${:02x}", self.name, self.param.unwrap()),
             AddressingMode::ZeroPageX => {
                 write!(f, "{} ${:#02x}, X", self.name, self.param.unwrap())
             }
@@ -436,12 +436,12 @@ macro_rules! define_ld_inst {
             fn test_indirect_indexed() {
                 let mut runner = TestRunner::new();
                 if let Some(opcode) = get_opcode(OPCODE_MAP, AddressingMode::IndirectIndexed) {
-                    runner.set(Y, 0x0f);
-                    runner.set_mem(0x10, 0x45);
-                    runner.set_mem(0x11, 0x23);
-                    runner.set_mem(0x2345, 0xff);
+                    runner.set(Y, 0x01);
+                    runner.set_mem(0x10, 0x23);
+                    runner.set_mem(0x11, 0x20);
+                    runner.set_mem(0x2024, 0x45);
                     runner.load_and_test(&[opcode, 0x10])
-                        .verify($reg, 0x0e)
+                        .verify($reg, 0x45)
                         .verify(Z, false)
                         .verify(N, false);
                 }

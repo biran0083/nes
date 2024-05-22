@@ -1,4 +1,5 @@
-use crate::instructions::{Inst, INST_FACTORIES_BY_OP_CODE};
+use crate::{error::NesError, instructions::{Inst, INST_FACTORIES_BY_OP_CODE}};
+use error_stack::{bail, Result};
 
 #[derive(Default)]
 pub struct Flags {
@@ -116,24 +117,24 @@ impl CPU {
         self.pc = self.get_mem16(0xFFFC);
     }
 
-    pub fn set_mem(&mut self, addr: usize, value: u8) {
-        self.mem[addr] = value;
+    pub fn set_mem(&mut self, addr: u16, value: u8) {
+        self.mem[addr as usize] = value;
     }
 
-    pub fn set_mem16(&mut self, addr: usize, value: u16) {
+    pub fn set_mem16(&mut self, addr: u16, value: u16) {
         let lsb = (value & 0xff) as u8;
         let msb = (value >> 8) as u8;
         self.set_mem(addr, lsb);
-        self.set_mem(addr + 1, msb);
+        self.set_mem(addr.wrapping_add(1), msb);
     }
 
-    pub fn get_mem(&self, addr: usize) -> u8 {
-        self.mem[addr]
+    pub fn get_mem(&self, addr: u16) -> u8 {
+        self.mem[addr as usize]
     }
 
-    pub fn get_mem16(&self, addr: usize) -> u16 {
+    pub fn get_mem16(&self, addr: u16) -> u16 {
         let lsb = self.get_mem(addr) as u16;
-        let msb = self.get_mem(addr + 1) as u16;
+        let msb = self.get_mem(addr.wrapping_add(1)) as u16;
         (msb << 8) + lsb
     }
 
@@ -153,34 +154,37 @@ impl CPU {
         self.sp = 0xff;
     }
 
-    fn decode(&mut self) -> Inst {
+    fn decode(&mut self) -> Result<Inst, NesError> {
         let op = self.mem[self.pc as usize];
-        INST_FACTORIES_BY_OP_CODE
-            .get(&op)
-            .unwrap()
-            .make(&self.mem[((self.pc + 1) as usize)..])
+        if let Some(factory) = INST_FACTORIES_BY_OP_CODE
+            .get(&op) {
+            return Ok(factory.make(&self.mem[((self.pc + 1) as usize)..]))
+        }
+        bail!(NesError::DisassemblerFailure(format!("Instruction not found. opcode={:02x} pc={:04x}", op, self.pc)))
     }
 
-    pub fn run_once(&mut self) {
-        let ins = self.decode();
+    pub fn run_once(&mut self) -> Result<(), NesError> {
+        let ins = self.decode()?;
+        tracing::debug!("[pc={:04x}] running {:?}", self.pc, ins);
         ins.run(self);
+        Ok(())
     }
 
-    pub fn load_and_run(&mut self, bytes: &[u8], start: usize) {
+    pub fn load_and_run(&mut self, bytes: &[u8], start: usize) -> Result<(), NesError> {
         self.load_program(bytes, start);
         self.reset();
         loop {
-            self.run_once();
+            self.run_once()?;
         }
     }
 
-    pub fn get_stack_top_addr(&self) -> usize {
-        0x100 + self.sp as usize
+    pub fn get_stack_top_addr(&self) -> u16 {
+        0x100 + self.sp as u16
     }
 
     pub fn push8(&mut self, value: u8) {
         let addr = self.get_stack_top_addr();
-        self.mem[addr] = value;
+        self.mem[addr as usize] = value;
         self.sp -= 1;
     }
 
@@ -193,7 +197,7 @@ impl CPU {
 
     pub fn pop8(&mut self) -> u8 {
         self.sp += 1;
-        self.mem[self.get_stack_top_addr()]
+        self.mem[self.get_stack_top_addr() as usize]
     }
 
     pub fn pop16(&mut self) -> u16 {

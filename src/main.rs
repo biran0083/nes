@@ -34,10 +34,10 @@ fn write_file(file_path: &str, bytes: &[u8]) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn run_file(file: &str) -> Result<(), std::io::Error> {
-    let game_code = read_file(file)?;
+fn run_file(file: &str) -> Result<(), NesError> {
+    let game_code = read_file(file).change_context(NesError::Io)?;
     let mut cpu = cpu::CPU::new();
-    cpu.load_and_run(&game_code, 0x6000);
+    cpu.load_and_run(&game_code, 0x0600)?;
     Ok(())
 }
 
@@ -67,7 +67,7 @@ fn parse_int16(s: &str) -> Result<u16, NesError> {
 
 fn main() -> Result<(), NesError>{
     tracing_subscriber::fmt()
-        .with_max_level(Level::INFO)
+        .with_max_level(Level::DEBUG)
         .init();
     let matches = Command::new("NES Emulator")
         .version("1.0")
@@ -102,7 +102,7 @@ fn main() -> Result<(), NesError>{
     match matches.subcommand() {
         Some(("run", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();
-            run_file(file).change_context(NesError::Io)?;
+            run_file(file)?;
         },
         Some(("disassemble", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();

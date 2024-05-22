@@ -29,12 +29,12 @@ impl TestRunner {
         retriever.get(&self.cpu)
     }
 
-    pub fn set_mem(&mut self, addr: usize, value: u8) -> &mut Self {
-        self.cpu.mem[addr] = value;
+    pub fn set_mem(&mut self, addr: u16, value: u8) -> &mut Self {
+        self.cpu.set_mem(addr, value);
         self
     }
 
-    pub fn set_mem16(&mut self, addr: usize, value: u16) -> &mut Self {
+    pub fn set_mem16(&mut self, addr: u16, value: u16) -> &mut Self {
         self.cpu.set_mem16(addr, value);
         self
     }
@@ -62,7 +62,7 @@ impl TestRunner {
     }
 
     pub fn test(&mut self) -> TestResult {
-        self.cpu.run_once();
+        self.cpu.run_once().unwrap();
         TestResult {
             cpu: &self.cpu
         }

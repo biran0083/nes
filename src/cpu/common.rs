@@ -29,11 +29,11 @@ pub enum Flag {
 
 #[derive(Debug)]
 pub struct Mem {
-    addr: usize,
+    addr: u16,
 }
 
 impl Mem {
-    pub fn new(addr: usize) -> Self {
+    pub fn new(addr: u16) -> Self {
         Mem {
             addr
         }
@@ -85,7 +85,7 @@ impl Retriever<u8> for Mem {
 
 impl Retriever<u8> for Stack {
     fn get(&self, cpu: &CPU) -> u8 {
-        cpu.get_mem(cpu.get_stack_top_addr() + self.offset as usize)
+        cpu.get_mem(cpu.get_stack_top_addr().wrapping_add(self.offset as u16))
     }
 }
 
@@ -134,7 +134,7 @@ impl Setter<u8> for Mem {
 
 impl Setter<u8> for Stack {
     fn set(&self, cpu: &mut CPU, value: u8) {
-        cpu.set_mem(cpu.get_stack_top_addr() + self.offset as usize, value);
+        cpu.set_mem(cpu.get_stack_top_addr().wrapping_add(self.offset as u16), value);
     }
 }
 

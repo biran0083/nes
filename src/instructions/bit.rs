@@ -8,7 +8,7 @@ pub const RUN : InstFun = |ins, cpu: &mut CPU| {
     cpu.flags.set_z(res == 0);
     cpu.flags.set_v((m & 0x40) != 0);
     cpu.flags.set_n((m & 0x80) != 0);
-    cpu.pc = ins.len();
+    cpu.pc += ins.len();
 };
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[

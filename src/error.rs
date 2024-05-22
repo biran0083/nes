@@ -11,4 +11,6 @@ pub enum NesError {
     InstNotFound(String),
     #[error("Failed to assemble instruction: {0}")]
     AssemblerFailure(String),
+    #[error("Failed to disassemble instruction: {0}")]
+    DisassemblerFailure(String),
 }
