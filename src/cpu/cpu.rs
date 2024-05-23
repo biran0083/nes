@@ -92,7 +92,7 @@ pub struct CPU {
     pub sp: u8,
     pub pc: u16,
     pub flags: Flags,
-    pub mem: Vec<u8>,
+    mem: Vec<u8>,
 }
 
 impl CPU {
@@ -108,6 +108,7 @@ impl CPU {
         }
     }
 
+
     pub fn reset(&mut self) {
         self.x = 0;
         self.y = 0;
@@ -117,8 +118,23 @@ impl CPU {
         self.pc = self.get_mem16(0xFFFC);
     }
 
+    fn get_phisical_addr(&self, addr: u16) -> u16 {
+        match addr {
+            0x0000..=0x1FFF => {
+                addr & 0x07FF
+            }
+            0x2000..=0x3FFF => {
+                addr & 0x2007
+            }
+            _ => {
+                addr
+            }
+        }
+    }
+
     pub fn set_mem(&mut self, addr: u16, value: u8) {
-        self.mem[addr as usize] = value;
+        let i = self.get_phisical_addr(addr) as usize;
+        self.mem[i] = value;
     }
 
     pub fn set_mem16(&mut self, addr: u16, value: u16) {
@@ -129,7 +145,7 @@ impl CPU {
     }
 
     pub fn get_mem(&self, addr: u16) -> u8 {
-        self.mem[addr as usize]
+        self.mem[self.get_phisical_addr(addr) as usize]
     }
 
     pub fn get_mem16(&self, addr: u16) -> u16 {
