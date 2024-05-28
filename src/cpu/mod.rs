@@ -2,7 +2,7 @@ mod cpu;
 pub mod addressing_mode;
 #[cfg(test)]
 pub mod test_util;
-pub use cpu::CPU;
+pub use cpu::{CPU, CpuState};
 mod common;
 pub use common::{Mem, Register8, Flag, Setter, Retriever};
 #[cfg(test)]

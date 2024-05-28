@@ -50,37 +50,49 @@ impl Inst {
         }
         bytes
     }
+
+    pub fn to_string(&self, pc: Option<u16>) -> String {
+        match self.mode {
+            AddressingMode::Implied => format!("{}", self.name),
+            AddressingMode::Accumulator => format!("{} A", self.name),
+            AddressingMode::Relative => {
+                let delta = (self.param.unwrap() as i8).wrapping_add(2);
+                if let Some(addr) = pc {
+                    let target = addr.wrapping_add(delta as u16);
+                    format!("{} ${:04X}", self.name, target)
+                } else {
+                    format!("{} *{:02X}", self.name, delta)
+                }
+            }
+            AddressingMode::Immediate => format!("{} #${:02X}", self.name, self.param.unwrap()),
+            AddressingMode::ZeroPage => format!("{} ${:02X}", self.name, self.param.unwrap()),
+            AddressingMode::ZeroPageX => {
+                format!("{} ${:02X},X", self.name, self.param.unwrap())
+            }
+            AddressingMode::ZeroPageY => {
+                format!("{} ${:02X},Y", self.name, self.param.unwrap())
+            }
+            AddressingMode::Absolute => format!("{} ${:04X}", self.name, self.param.unwrap()),
+            AddressingMode::AbsoluteX => {
+                format!("{} ${:04X},X", self.name, self.param.unwrap())
+            }
+            AddressingMode::AbsoluteY => {
+                format!("{} ${:04X},Y", self.name, self.param.unwrap())
+            }
+            AddressingMode::IndexedIndirect => {
+                format!("{} (${:02X},X)", self.name, self.param.unwrap())
+            }
+            AddressingMode::IndirectIndexed => {
+                format!("{} (${:02X}),Y", self.name, self.param.unwrap())
+            }
+            AddressingMode::Indirect => format!("{} (${:04X})", self.name, self.param.unwrap()),
+        }
+    }
 }
 
 impl std::fmt::Debug for Inst {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.mode {
-            AddressingMode::Implied => write!(f, "{}", self.name),
-            AddressingMode::Accumulator => write!(f, "{} A", self.name),
-            AddressingMode::Relative|
-            AddressingMode::Immediate => write!(f, "{} #${:02x}", self.name, self.param.unwrap()),
-            AddressingMode::ZeroPage => write!(f, "{} ${:02x}", self.name, self.param.unwrap()),
-            AddressingMode::ZeroPageX => {
-                write!(f, "{} ${:#02x}, X", self.name, self.param.unwrap())
-            }
-            AddressingMode::ZeroPageY => {
-                write!(f, "{} ${:#02x}, Y", self.name, self.param.unwrap())
-            }
-            AddressingMode::Absolute => write!(f, "{} ${:04x}", self.name, self.param.unwrap()),
-            AddressingMode::AbsoluteX => {
-                write!(f, "{} ${:#04x}, X", self.name, self.param.unwrap())
-            }
-            AddressingMode::AbsoluteY => {
-                write!(f, "{} ${:#04x}, Y", self.name, self.param.unwrap())
-            }
-            AddressingMode::IndexedIndirect => {
-                write!(f, "{} (${:#02x}, X)", self.name, self.param.unwrap())
-            }
-            AddressingMode::IndirectIndexed => {
-                write!(f, "{} (${:#02x}), Y", self.name, self.param.unwrap())
-            }
-            AddressingMode::Indirect => write!(f, "{} (${:#04x})", self.name, self.param.unwrap()),
-        }
+        write!(f, "{}", self.to_string(None))
     }
 }
 
@@ -92,6 +104,8 @@ pub struct InstFactory {
 }
 
 impl InstFactory {
+    // Create an instruction from the given bytes.
+    // Bytes does not include the opcode.
     pub fn make(&self, bytes: &[u8]) -> Inst {
         Inst {
             opcode: self.opcode,
@@ -184,7 +198,7 @@ macro_rules! define_jump_inst {
         pub const RUN : InstFun = |ins, cpu: &mut CPU| {
             let operand : i8 = load_operand(ins.mode, cpu, ins.param.unwrap()) as i8;
             if $flag.get(cpu) == $value {
-                cpu.pc = cpu.pc.wrapping_add(operand as u16);
+                cpu.pc = cpu.pc.wrapping_add(operand as u16).wrapping_add(2);
             }
             cpu.pc = cpu.pc.wrapping_add(ins.len());
         };

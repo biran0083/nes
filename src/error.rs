@@ -13,4 +13,8 @@ pub enum NesError {
     AssemblerFailure(String),
     #[error("Failed to disassemble instruction: {0}")]
     DisassemblerFailure(String),
+    #[error("Invalid file extension: {0}")]
+    InvalidFileExtension(String),
+    #[error("Failed to parse cpu state")]
+    ParseCpuStateError,
 }

@@ -9,7 +9,7 @@ pub const RUN : InstFun = |_, cpu| {
 };
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
-        (0x40, AddressingMode::Immediate),
+        (0x40, AddressingMode::Implied),
     ];
 
 #[cfg(test)]

@@ -2,44 +2,30 @@ mod instructions;
 mod cpu;
 mod assembler;
 mod error;
+mod io;
+mod nes_format;
 
-use std::fs::File;
 use assembler::AsmLine;
 use clap::{arg, Command};
 use assembler::Assembler;
+use cpu::CpuState;
 use cpu::CPU;
 use error::NesError;
+use error_stack::bail;
 use instructions::disassemble;
 use error_stack::{Result, ResultExt};
+use io::read_file;
+use io::read_file_lines;
+use io::write_file;
+use nes_format::read_nes_file;
 use rand::Rng;
 use tracing::Level;
-use std::io::Read;
-use std::io::Write;
 use sdl2::event::Event;
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 
-fn read_file(file_path: &str) -> Result<Vec<u8>, std::io::Error> {
-    let mut file = File::open(file_path)?;
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)?;
-    Ok(buffer)
-}
-
-fn read_file_lines(file_path: &str) -> Result<Vec<String>, std::io::Error> {
-    let mut file = File::open(file_path)?;
-    let mut buffer = String::new();
-    file.read_to_string(&mut buffer)?;
-    Ok(buffer.lines().map(|s| s.to_string()).collect())
-}
-
-fn write_file(file_path: &str, bytes: &[u8]) -> Result<(), std::io::Error> {
-    let mut file = File::create(file_path)?;
-    file.write_all(bytes)?;
-    Ok(())
-}
 
 fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
     for event in event_pump.poll_iter() {
@@ -95,7 +81,7 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
     update
  }
 
-fn run_file(file: &str) -> Result<(), NesError> {
+fn run_code(game_code: Vec<u8>, start_addr: u16) -> Result<(), NesError> {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
@@ -109,10 +95,8 @@ fn run_file(file: &str) -> Result<(), NesError> {
     let creator = canvas.texture_creator();
     let mut texture = creator
         .create_texture_target(PixelFormatEnum::RGB24, 32, 32).unwrap();
-
-    let game_code = read_file(file).change_context(NesError::Io)?;
     let mut cpu = cpu::CPU::new();
-    cpu.load_program(&game_code, 0x0600);
+    cpu.load_program(&game_code, start_addr);
     cpu.reset();
     let mut screen_state = [0 as u8; 32 * 3 * 32];
     let mut rng = rand::thread_rng();
@@ -154,6 +138,20 @@ fn parse_int16(s: &str) -> Result<u16, NesError> {
     s.parse::<u16>().change_context(NesError::ParseInt)
 }
 
+fn parse_trace_log_file(fname: &str) -> Result<Vec<CpuState>, NesError> {
+    let lines = read_file_lines(fname).unwrap();
+    let mut states = Vec::new();
+    for line in lines {
+        let state = line.parse::<CpuState>().change_context(NesError::ParseCpuStateError)?;
+        states.push(state)
+    }
+    Ok(states)
+}
+
+fn test_code(code: Vec<u8>, start_addr: u16, logs: Vec<CpuState>) -> Result<(), NesError> {
+    Ok(())
+}
+
 fn main() -> Result<(), NesError>{
     tracing_subscriber::fmt()
         .with_max_level(Level::DEBUG)
@@ -165,6 +163,9 @@ fn main() -> Result<(), NesError>{
         .subcommand(
             Command::new("run")
                 .about("Runs the specified file")
+                .arg(arg!(--start <ADDRESS> "The start address for assembling")
+                    .default_value("0x0600")
+                    .required(false))
                 .arg(arg!(<FILE> "The file to run")
                     .required(true)
                     .index(1))
@@ -187,11 +188,35 @@ fn main() -> Result<(), NesError>{
                     .required(true)
                     .index(1))
         )
+        .subcommand(
+            Command::new("test")
+                .about("Run program in test mode")
+                .arg(arg!(--start <ADDRESS> "The start address for assembling")
+                    .required(false))
+                .arg(arg!(--out <OUT> "The output for cpu traces")
+                    .required(true))
+                .arg(arg!(<FILE> "The file to test")
+                    .required(true)
+                    .index(1))
+        )
         .get_matches();
     match matches.subcommand() {
         Some(("run", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();
-            run_file(file)?;
+            let start = parse_int16(sub_m.get_one::<String>("start").unwrap())
+                .change_context(NesError::ParseInt)?;
+            if file.ends_with(".bin") {
+                let code = read_file(file).change_context(NesError::Io)?;
+                run_code(code, start)?;
+            } else if file.ends_with(".asm") {
+                let code = assemble_file(file, start)?;
+                run_code(code, start)?;
+            } else if file.ends_with(".nes") {
+                let nes_file = read_nes_file(file).change_context(NesError::Io)?;
+                run_code(nes_file.prg_rom, start)?;
+            } else {
+                bail!(NesError::InvalidFileExtension(file.to_string()));
+            }
         },
         Some(("disassemble", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();
@@ -205,6 +230,19 @@ fn main() -> Result<(), NesError>{
             let bytes = assemble_file(file, start)?;
             write_file(output_file, &bytes).change_context(NesError::Io)?;
         },
+        Some(("test", sub_m)) => {
+            let file = sub_m.get_one::<String>("FILE").unwrap();
+            let trace_log_file = sub_m.get_one::<String>("out").unwrap();
+            let start = parse_int16(sub_m.get_one::<String>("start").unwrap())
+                .change_context(NesError::ParseInt)?;
+            let logs: Vec<CpuState> = parse_trace_log_file(trace_log_file)?;
+            if file.ends_with(".nes") {
+                let nes_file = read_nes_file(file).change_context(NesError::Io)?;
+                test_code(nes_file.prg_rom, start, logs)?;
+            } else {
+                bail!(NesError::InvalidFileExtension(file.to_string()));
+            }
+        }
         _ => unreachable!("The CLI parser ensures that a subcommand is used"),
     }
     Ok(())

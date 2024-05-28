@@ -1,0 +1,18 @@
+// .vscode/launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cargo Run with Arguments",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/target/debug/nes",
+      "args": ["test", "tests/nestest.nes", "--start", "0xC000", "--out", "tests/nestest.log"],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "cargo build",
+      "internalConsoleOptions": "openOnSessionStart",
+      "stopAtEntry": false,
+      "externalConsole": false
+    }
+  ]
+}
