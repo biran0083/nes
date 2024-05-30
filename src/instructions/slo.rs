@@ -45,22 +45,22 @@ mod test {
             .verify(Z, false)
             .verify(N, false);
 
-            runner.set_mem(0x10, 0xf0);
-            runner.set(A, 0x00);
-            runner.load_and_test(&[0x07, 0x10])
-                .verify(Mem::new(0x10), 0xe0)
-                .verify(A, 0xe0)
-                .verify(C, true)
-                .verify(Z, false)
-                .verify(N, true);
+        runner.set_mem(0x10, 0xf0);
+        runner.set(A, 0x00);
+        runner.load_and_test(&[0x07, 0x10])
+            .verify(Mem::new(0x10), 0xe0)
+            .verify(A, 0xe0)
+            .verify(C, true)
+            .verify(Z, false)
+            .verify(N, true);
 
-            runner.set_mem(0x10, 0x80);
-            runner.set(A, 0x00);
-            runner.load_and_test(&[0x07, 0x10])
-                .verify(Mem::new(0x10), 0)
-                .verify(A, 0)
-                .verify(C, true)
-                .verify(Z, true)
-                .verify(N, false);
+        runner.set_mem(0x10, 0x80);
+        runner.set(A, 0x00);
+        runner.load_and_test(&[0x07, 0x10])
+            .verify(Mem::new(0x10), 0)
+            .verify(A, 0)
+            .verify(C, true)
+            .verify(Z, true)
+            .verify(N, false);
     }
 }
