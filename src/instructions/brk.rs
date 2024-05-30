@@ -6,6 +6,7 @@ pub const RUN : InstFun = |_, cpu| {
     cpu.push16(cpu.pc + 2);
     cpu.flags.set_b(true);
     cpu.push8(cpu.flags.get());
+    cpu.flags.set_b(false);
     cpu.pc = cpu.get_mem16(0xFFFE);
     cpu.flags.set_i(true);
 };
@@ -26,7 +27,7 @@ mod tests {
         let old_flag = runner.get(Flags{}) | 0x10;
         runner.set_mem16(0xfffe, 0x1234)
             .load_and_test(&[0x00])
-            .verify(B, true)
+            .verify(B, false)
             .verify(PC, 0x1234)
             .verify(Stack::new(1), old_flag)
             .verify(Stack::new(2), 0x02)

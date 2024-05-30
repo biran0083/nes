@@ -5,6 +5,10 @@ mod error;
 mod io;
 mod nes_format;
 
+use std::fs::File;
+use std::io::BufRead;
+use std::io::BufReader;
+
 use assembler::AsmLine;
 use clap::{arg, Command};
 use assembler::Assembler;
@@ -110,6 +114,7 @@ fn run_code(game_code: Vec<u8>, start_addr: u16) -> Result<(), NesError> {
         }
 
         ::std::thread::sleep(std::time::Duration::new(0, 200_000));
+        Ok(())
     })?;
     Ok(())
 }
@@ -138,17 +143,36 @@ fn parse_int16(s: &str) -> Result<u16, NesError> {
     s.parse::<u16>().change_context(NesError::ParseInt)
 }
 
-fn parse_trace_log_file(fname: &str) -> Result<Vec<CpuState>, NesError> {
-    let lines = read_file_lines(fname).unwrap();
-    let mut states = Vec::new();
-    for line in lines {
-        let state = line.parse::<CpuState>().change_context(NesError::ParseCpuStateError)?;
-        states.push(state)
-    }
-    Ok(states)
+struct CpuStateReader {
+    reader: BufReader<File>,
 }
 
-fn test_code(code: Vec<u8>, start_addr: u16, logs: Vec<CpuState>) -> Result<(), NesError> {
+impl CpuStateReader {
+    fn new(fname: &str) -> Result<Self, NesError> {
+        let file = File::open(fname).change_context(NesError::Io)?;
+        let reader = BufReader::new(file);
+        Ok(CpuStateReader { reader })
+    }
+
+    fn next(&mut self) -> Result<CpuState, NesError> {
+        let mut line = String::new();
+        self.reader.read_line(&mut line).change_context(NesError::Io)?;
+        line.parse::<CpuState>().change_context(NesError::ParseCpuStateError)
+    }
+}
+
+fn test_code(code: Vec<u8>, start_addr: u16, mut state_reader: CpuStateReader) -> Result<(), NesError> {
+    let mut cpu = cpu::CPU::new();
+    cpu.load_program(&code, start_addr);
+    cpu.reset();
+    cpu.pc = start_addr;
+    cpu.run_with_callback(|cpu| {
+        let state = cpu.trace()?;
+        let expected = state_reader.next()?;
+        assert_eq!(state, expected);
+        tracing::info!("passed: {:?}", state);
+        Ok(())
+    })?;
     Ok(())
 }
 
@@ -235,10 +259,9 @@ fn main() -> Result<(), NesError>{
             let trace_log_file = sub_m.get_one::<String>("out").unwrap();
             let start = parse_int16(sub_m.get_one::<String>("start").unwrap())
                 .change_context(NesError::ParseInt)?;
-            let logs: Vec<CpuState> = parse_trace_log_file(trace_log_file)?;
             if file.ends_with(".nes") {
                 let nes_file = read_nes_file(file).change_context(NesError::Io)?;
-                test_code(nes_file.prg_rom, start, logs)?;
+                test_code(nes_file.prg_rom, start, CpuStateReader::new(trace_log_file)?)?;
             } else {
                 bail!(NesError::InvalidFileExtension(file.to_string()));
             }

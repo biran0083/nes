@@ -4,6 +4,7 @@ use super::InstFun;
 pub const RUN : InstFun = |ins, cpu| {
     let value = cpu.pop8();
     cpu.flags.set(value);
+    cpu.flags.set_b(false);
     cpu.pc += ins.len();
 };
 
@@ -20,8 +21,8 @@ mod test {
     fn test() {
         let mut runner = TestRunner::new();
         runner.load_program(&[0x28]);
-        runner.push(0x81);
+        runner.push(0b0101_1100);
         runner.test()
-            .verify(Flags{}, 0x81);
+            .verify(Flags{}, 0b0110_1100);
     }
 }

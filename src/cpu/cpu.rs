@@ -1,15 +1,38 @@
-use std::{fmt::Debug, num::ParseIntError, str::FromStr};
+use std::{fmt::Debug, str::FromStr};
 
 use crate::{error::NesError, instructions::{Inst, INST_FACTORIES_BY_OP_CODE}};
-use error_stack::{bail, Result, ResultExt};
+use error_stack::{bail, Result};
 use thiserror::Error;
 
 
-#[derive(Default, Clone)]
+/**
+
+ 7  bit  0
+---- ----
+NV1B DIZC
+|||| ||||
+|||| |||+- Carry
+|||| ||+-- Zero
+|||| |+--- Interrupt Disable
+|||| +---- Decimal
+|||+------ (No CPU effect; see: the B flag)
+||+------- (No CPU effect; always pushed as 1)
+|+-------- Overflow
++--------- Negative
+ */
+#[derive(Clone, PartialEq)]
 pub struct Flags {
     pub value: u8,
 }
 
+impl Default for Flags {
+    fn default() -> Self {
+        Self {
+            value: 0b0010_0100,
+        }
+    }
+
+}
 impl Flags {
     fn get_bit(&self, n: u8) -> bool {
         self.value & (1 << n) != 0
@@ -28,7 +51,7 @@ impl Flags {
     }
 
     pub fn set(&mut self, v: u8) {
-        self.value = v
+        self.value = v | 0b0010_0000;
     }
 
     pub fn c(&self) -> bool {
@@ -72,19 +95,19 @@ impl Flags {
     }
 
     pub fn v(&self) -> bool {
-        self.get_bit(5)
-    }
-
-    pub fn set_v(&mut self, v: bool) {
-        self.set_bit(5, v)
-    }
-
-    pub fn n(&self) -> bool {
         self.get_bit(6)
     }
 
+    pub fn set_v(&mut self, v: bool) {
+        self.set_bit(6, v)
+    }
+
+    pub fn n(&self) -> bool {
+        self.get_bit(7)
+    }
+
     pub fn set_n(&mut self, n: bool) {
-        self.set_bit(6, n)
+        self.set_bit(7, n)
     }
 }
 
@@ -117,7 +140,7 @@ impl CPU {
         self.x = 0;
         self.y = 0;
         self.a = 0;
-        self.sp = 0xff;
+        self.sp = 0xFD;
         self.flags = Flags::default();
         self.pc = self.get_mem16(0xFFFC);
     }
@@ -192,9 +215,9 @@ impl CPU {
     }
 
     pub fn run_with_callback<F>(&mut self, mut f: F) -> Result<(), NesError>
-        where F: FnMut(&mut CPU) {
+        where F: FnMut(&mut CPU) -> Result<(), NesError> {
         loop {
-            f(self);
+            f(self)?;
             self.run_once()?;
         }
     }
@@ -242,6 +265,7 @@ impl CPU {
     }
 }
 
+#[derive(Clone, PartialEq)]
 pub struct CpuState {
     x: u8,
     y: u8,
@@ -319,7 +343,7 @@ impl FromStr for CpuState {
             a: 0,
             sp: 0,
             pc,
-            flags: Flags { value: 0 },
+            flags: Flags::default(),
             inst,
             inst_details: None,
         };
@@ -343,7 +367,6 @@ impl FromStr for CpuState {
                 }
             }
         }
-        println!("ok {}", s);
         Ok(res)
     }
 }

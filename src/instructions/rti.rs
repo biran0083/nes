@@ -27,6 +27,6 @@ mod test {
         runner.push(0x56);
         runner.test()
             .verify(PC, 0x1234)
-            .verify(Flags{}, 0x56);
+            .verify(Flags{}, 0x56 | 0b0010_0000);
     }
 }

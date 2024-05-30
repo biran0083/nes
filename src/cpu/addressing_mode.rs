@@ -94,7 +94,13 @@ pub fn load_operand_addr(mode: AddressingMode, cpu: &CPU, param: u16) -> u16 {
             panic!("load_operand_addr should not be called for {:?} instruction", mode)
         }
         AddressingMode::Indirect => {
-            cpu.get_mem16(param as u16) as u16
+            let lo = cpu.get_mem(param) as u16;
+            let hi = if param & 0xff == 0xff {
+                cpu.get_mem(param & 0xff00) as u16
+            } else {
+                cpu.get_mem(param + 1) as u16
+            };
+            lo | (hi << 8)
         }
         AddressingMode::ZeroPage => {
             assert!(param <= 0xff);
@@ -113,12 +119,17 @@ pub fn load_operand_addr(mode: AddressingMode, cpu: &CPU, param: u16) -> u16 {
         AddressingMode::AbsoluteY => (param.wrapping_add(cpu.y as u16)) as u16,
         AddressingMode::IndexedIndirect => {
             assert!(param <= 0xff);
-            let addr = (cpu.x.wrapping_add(param as u8)) as u16;
-            cpu.get_mem16(addr) as u16
+            let addr = cpu.x.wrapping_add(param as u8);
+            let lo = cpu.get_mem(addr as u16) as u16;
+            let hi = cpu.get_mem(addr.wrapping_add(1) as u16) as u16;
+            lo | (hi << 8)
         }
         AddressingMode::IndirectIndexed => {
             assert!(param <= 0xff);
-            let addr = cpu.get_mem16(param as u16) as u16;
+            let i = param as u8;
+            let lo = cpu.get_mem(i as u16) as u16;
+            let hi = cpu.get_mem(i.wrapping_add(1) as u16) as u16;
+            let addr = lo | (hi << 8);
             addr.wrapping_add(cpu.y as u16)
         }
     }

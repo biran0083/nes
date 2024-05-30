@@ -4,6 +4,7 @@ use super::InstFun;
 pub const RUN : InstFun = |ins, cpu| {
     cpu.flags.set_b(true);
     cpu.push8(cpu.flags.get());
+    cpu.flags.set_b(false);
     cpu.pc += ins.len();
 };
 

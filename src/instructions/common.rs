@@ -7,6 +7,8 @@ use crate::{
 };
 
 pub type InstFun = fn(&Inst, &mut CPU);
+
+#[derive(Clone, PartialEq)]
 pub struct Inst {
     pub opcode: u8,
     pub name: String,
@@ -198,7 +200,7 @@ macro_rules! define_jump_inst {
         pub const RUN : InstFun = |ins, cpu: &mut CPU| {
             let operand : i8 = load_operand(ins.mode, cpu, ins.param.unwrap()) as i8;
             if $flag.get(cpu) == $value {
-                cpu.pc = cpu.pc.wrapping_add(operand as u16).wrapping_add(2);
+                cpu.pc = cpu.pc.wrapping_add(operand as u16);
             }
             cpu.pc = cpu.pc.wrapping_add(ins.len());
         };
@@ -503,6 +505,9 @@ macro_rules! define_st_inst {
 #[macro_export]
 macro_rules! define_t_inst {
     ($src: expr, $dst: expr, $opcode_map: expr) => {
+        define_t_inst!($src, $dst, $opcode_map, true);
+    };
+    ($src: expr, $dst: expr, $opcode_map: expr, $update_status: expr) => {
         use crate::cpu::addressing_mode::AddressingMode;
         use super::InstFun;
         use crate::cpu::Register8::*;
@@ -512,8 +517,10 @@ macro_rules! define_t_inst {
         pub const RUN : InstFun = |ins, cpu| {
             let value = $src.get(cpu);
             $dst.set(cpu, value);
-            cpu.update_z(value);
-            cpu.update_n(value);
+            if ($update_status) {
+                cpu.update_z(value);
+                cpu.update_n(value);
+            }
             cpu.pc += ins.len();
         };
 
@@ -533,24 +540,30 @@ macro_rules! define_t_inst {
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::Implied).unwrap();
                 runner.load_program(&[opcode]);
                 runner.set($src, 0x21);
-                runner.test()
-                    .verify($dst, 0x21)
-                    .verify(Z, false)
-                    .verify(N, false);
+                let test = runner.test();
+                test.verify($dst, 0x21);
+                if ($update_status) {
+                    test.verify(Z, false);
+                    test.verify(N, false);
+                }
 
                 runner.load_program(&[opcode]);
                 runner.set($src, 0);
-                runner.test()
-                    .verify($dst, 0)
-                    .verify(Z, true)
-                    .verify(N, false);
+                let test = runner.test();
+                test.verify($dst, 0);
+                if ($update_status) {
+                    test.verify(Z, true);
+                    test.verify(N, false);
+                }
 
                 runner.load_program(&[opcode]);
                 runner.set($src, 0xf0);
-                runner.test()
-                    .verify($dst, 0xf0)
-                    .verify(Z, false)
-                    .verify(N, true);
+                let test = runner.test();
+                test.verify($dst, 0xf0);
+                if ($update_status) {
+                    test.verify(Z, false);
+                    test.verify(N, true);
+                }
             }
         }
     };
