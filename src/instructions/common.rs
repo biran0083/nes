@@ -633,6 +633,7 @@ static ref INSTRUCTIONS: Vec<InstructionInfo> =  vec![
     instruction_info!(lax),
     instruction_info!(lar),
     instruction_info!(kil),
+    instruction_info!(isc),
 ];
 
 pub static ref INST_FACTORIES_BY_OP_CODE: HashMap<u8, InstFactory> = {

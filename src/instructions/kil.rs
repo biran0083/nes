@@ -2,7 +2,7 @@ use crate::cpu::addressing_mode::AddressingMode;
 use super::InstFun;
 
 
-pub const RUN : InstFun = |ins, cpu| {
+pub const RUN : InstFun = |_ins, cpu| {
     cpu.halt = true;
 };
 
