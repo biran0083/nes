@@ -63,4 +63,5 @@ mod lar;
 mod kil;
 mod isc;
 mod dcp;
+mod axs;
 pub use common::{Inst, InstFun, INST_FACTORIES_BY_OP_CODE, INST_FACTORIES_BY_NAME_MODE, disassemble};
