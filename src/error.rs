@@ -17,4 +17,6 @@ pub enum NesError {
     InvalidFileExtension(String),
     #[error("Failed to parse cpu state")]
     ParseCpuStateError,
+    #[error("CPU halted")]
+    HaltError,
 }

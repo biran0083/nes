@@ -119,6 +119,7 @@ pub struct CPU {
     pub sp: u8,
     pub pc: u16,
     pub flags: Flags,
+    pub halt: bool,
     mem: Vec<u8>,
 }
 
@@ -131,6 +132,7 @@ impl CPU {
             sp: 0,
             pc: 0,
             flags: Flags::default(),
+            halt: false,
             mem: vec![0; 0x10000],
         }
     }
@@ -142,6 +144,7 @@ impl CPU {
         self.a = 0;
         self.sp = 0xFD;
         self.flags = Flags::default();
+        self.halt = false;
         self.pc = self.get_mem16(0xFFFC);
     }
 
@@ -172,6 +175,9 @@ impl CPU {
     }
 
     pub fn get_mem(&self, addr: u16) -> u8 {
+        if self.halt {
+            return 0xff;
+        }
         self.mem[self.get_phisical_addr(addr) as usize]
     }
 
@@ -208,6 +214,9 @@ impl CPU {
     }
 
     pub fn run_once(&mut self) -> Result<(), NesError> {
+        if self.halt {
+            bail!(NesError::HaltError{});
+        }
         let ins = self.decode()?;
         tracing::debug!("[pc={:04x}] running {:?}", self.pc, ins);
         ins.run(self);
@@ -216,10 +225,11 @@ impl CPU {
 
     pub fn run_with_callback<F>(&mut self, mut f: F) -> Result<(), NesError>
         where F: FnMut(&mut CPU) -> Result<(), NesError> {
-        loop {
+        while !self.halt {
             f(self)?;
             self.run_once()?;
         }
+        bail!(NesError::HaltError{});
     }
 
     pub fn get_stack_top_addr(&self) -> u16 {
