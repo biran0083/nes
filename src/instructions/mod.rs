@@ -58,4 +58,5 @@ mod tya;
 // unofficial instructions
 mod slo;
 mod sre;
+mod lax;
 pub use common::{Inst, InstFun, INST_FACTORIES_BY_OP_CODE, INST_FACTORIES_BY_NAME_MODE, disassemble};
