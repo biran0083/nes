@@ -307,6 +307,8 @@ pub enum CpuStateParseError {
     UnknownOpCode(u8),
     #[error("Bad instruction string: expect={expect}, actual={actual}")]
     BadInstructionString{expect: String, actual: String},
+    #[error("Bad instruction bytes: expect={expect:?}, actual={actual:?}")]
+    BadInstructionBytes{expect: Vec<u8>, actual: Vec<u8>},
 }
 
 impl FromStr for CpuState {
@@ -335,11 +337,14 @@ impl FromStr for CpuState {
                     .map_err(|_| CpuStateParseError::ParseIntError(b.to_string())))
                 .collect::<std::result::Result<Vec<u8>, _>>()?;
         if inst_bytes != inst.to_bytes() {
-            return Err(CpuStateParseError::IllegalInput(
-                format!("Bad instruction string: inst={:?} expect={:?}, actual={:?}", inst, inst.to_bytes(), inst_bytes)));
+            return Err(CpuStateParseError::BadInstructionBytes{expect:inst_bytes, actual: inst.to_bytes()});
         }
         parts = &parts[len..];
-        let inst_str = inst.to_string(Some(pc));
+        let mut inst_str = inst.to_string(Some(pc));
+        if parts[0].starts_with('*') {
+            // hack:  add * for unofficial instruction
+            inst_str.insert(0, '*');
+        }
         let inst_str_parts = inst_str.split_whitespace().collect::<Vec<&str>>();
         if &parts[..inst_str_parts.len()] != inst_str_parts.as_slice() {
             return Err(CpuStateParseError::BadInstructionString{

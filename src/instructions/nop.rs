@@ -28,4 +28,11 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
         (0xD4, AddressingMode::ZeroPageX),
         (0xE2, AddressingMode::Immediate),
         (0xF4, AddressingMode::ZeroPageX),
+        (0x0C, AddressingMode::Absolute),
+        (0x1C, AddressingMode::AbsoluteX),
+        (0x3C, AddressingMode::AbsoluteX),
+        (0x5C, AddressingMode::AbsoluteX),
+        (0x7C, AddressingMode::AbsoluteX),
+        (0xDC, AddressingMode::AbsoluteX),
+        (0xFC, AddressingMode::AbsoluteX),
     ];
