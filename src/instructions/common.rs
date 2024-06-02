@@ -1,11 +1,13 @@
 
 
+use std::collections::HashMap;
+use crate::instructions::INSTRUCTIONS;
 use crate::{
     cpu::addressing_mode::AddressingMode,
     cpu::CPU,
 };
 
-use super::INST_FACTORIES_BY_OP_CODE;
+use lazy_static::lazy_static;
 
 pub type InstFun = fn(&Inst, &mut CPU);
 
@@ -559,4 +561,117 @@ pub fn adc_helper(b: u8, cpu: &mut CPU) {
     cpu.a = result;
     cpu.update_z(cpu.a);
     cpu.update_n(cpu.a);
+}
+
+pub struct InstructionInfo {
+    name: String,
+    f: InstFun,
+    opcode_to_addressing_mode: &'static[(u8, AddressingMode)],
+}
+
+impl InstructionInfo {
+    pub fn new(name: String, f: InstFun, opcode_to_addressing_mode: &'static[(u8, AddressingMode)]) -> Self {
+        InstructionInfo {
+            name,
+            f,
+            opcode_to_addressing_mode,
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! define_instructions {
+    ( $( $inst:ident ),* $(,)?) => {
+        $(
+            mod $inst;
+        )*
+
+        lazy_static! {
+            static ref INSTRUCTIONS: Vec<InstructionInfo> = vec![
+                $(
+                    InstructionInfo::new(
+                        stringify!($inst).to_uppercase(),
+                        crate::instructions::$inst::RUN,
+                        crate::instructions::$inst::OPCODE_MAP
+                    ),
+                )*
+            ];
+        }
+    };
+}
+
+
+lazy_static! {
+    pub static ref INST_FACTORIES_BY_OP_CODE: HashMap<u8, InstFactory> = {
+        let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
+        for info in INSTRUCTIONS.iter() {
+            for (op, mode) in info.opcode_to_addressing_mode {
+                let res = inst_factory_by_op_code.insert(
+                    *op,
+                    InstFactory {
+                        opcode: *op,
+                        mode: *mode,
+                        name: info.name.clone(),
+                        f: info.f,
+                    },
+                );
+                if res.is_some() {
+                    panic!("duplicate op code: {:#x}", op);
+                }
+            }
+        }
+        inst_factory_by_op_code
+    };
+
+    pub static ref INST_FACTORIES_BY_NAME_MODE: HashMap<(String, AddressingMode), InstFactory> = {
+        let mut inst_factory_by_name_mode: HashMap<(String, AddressingMode), InstFactory> = HashMap::new();
+        for info in INSTRUCTIONS.iter() {
+            for (op, mode) in info.opcode_to_addressing_mode {
+                let res = inst_factory_by_name_mode.insert(
+                    (info.name.clone(), mode.clone()),
+                    InstFactory {
+                        opcode: *op,
+                        mode: *mode,
+                        name: info.name.clone(),
+                        f: info.f,
+                    },
+                );
+                if res.is_some() {
+                    panic!("duplicate op code: {:#x}", op);
+                }
+            }
+        }
+        inst_factory_by_name_mode
+    };
+    }
+
+pub struct InstFactory {
+    pub opcode : u8,
+    pub name: String,
+    pub mode: AddressingMode,
+    pub f: InstFun,
+}
+
+impl InstFactory {
+    // Create an instruction from the given bytes.
+    // Bytes does not include the opcode.
+    pub fn make(&self, bytes: &[u8]) -> Inst {
+        Inst {
+            opcode: self.opcode,
+            name: self.name.clone(),
+            param: self.mode.read_param(bytes),
+            mode: self.mode,
+            f: self.f,
+        }
+    }
+
+    pub fn make2(&self, param: Option<u16>) -> Inst {
+        Inst {
+            opcode: self.opcode,
+            name: self.name.clone(),
+            param,
+            mode: self.mode,
+            f: self.f,
+        }
+    }
 }
