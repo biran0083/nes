@@ -72,4 +72,5 @@ define_instructions!(
     axs,
     sax,
     rla,
+    rra,
 );

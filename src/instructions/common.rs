@@ -643,7 +643,7 @@ lazy_static! {
         }
         inst_factory_by_name_mode
     };
-    }
+}
 
 pub struct InstFactory {
     pub opcode : u8,
@@ -656,13 +656,7 @@ impl InstFactory {
     // Create an instruction from the given bytes.
     // Bytes does not include the opcode.
     pub fn make(&self, bytes: &[u8]) -> Inst {
-        Inst {
-            opcode: self.opcode,
-            name: self.name.clone(),
-            param: self.mode.read_param(bytes),
-            mode: self.mode,
-            f: self.f,
-        }
+        self.make2(self.mode.read_param(bytes))
     }
 
     pub fn make2(&self, param: Option<u16>) -> Inst {

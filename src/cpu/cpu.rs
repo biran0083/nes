@@ -1,9 +1,11 @@
 use std::{fmt::Debug, str::FromStr};
 
-use crate::{error::NesError, instructions::{Inst, INST_FACTORIES_BY_OP_CODE}};
+use crate::{
+    error::NesError,
+    instructions::{Inst, INST_FACTORIES_BY_OP_CODE},
+};
 use error_stack::{bail, Result};
 use thiserror::Error;
-
 
 /**
 
@@ -27,11 +29,8 @@ pub struct Flags {
 
 impl Default for Flags {
     fn default() -> Self {
-        Self {
-            value: 0b0010_0100,
-        }
+        Self { value: 0b0010_0100 }
     }
-
 }
 impl Flags {
     fn get_bit(&self, n: u8) -> bool {
@@ -137,6 +136,9 @@ impl CPU {
         }
     }
 
+    pub fn halt(&mut self) {
+        self.halt = true;
+    }
 
     pub fn reset(&mut self) {
         self.x = 0;
@@ -150,15 +152,9 @@ impl CPU {
 
     fn get_phisical_addr(&self, addr: u16) -> u16 {
         match addr {
-            0x0000..=0x1FFF => {
-                addr & 0x07FF
-            }
-            0x2000..=0x3FFF => {
-                addr & 0x2007
-            }
-            _ => {
-                addr
-            }
+            0x0000..=0x1FFF => addr & 0x07FF,
+            0x2000..=0x3FFF => addr & 0x2007,
+            _ => addr,
         }
     }
 
@@ -206,16 +202,18 @@ impl CPU {
 
     fn decode(&self) -> Result<Inst, NesError> {
         let op = self.mem[self.pc as usize];
-        if let Some(factory) = INST_FACTORIES_BY_OP_CODE
-            .get(&op) {
-            return Ok(factory.make(&self.mem[((self.pc + 1) as usize)..]))
+        if let Some(factory) = INST_FACTORIES_BY_OP_CODE.get(&op) {
+            return Ok(factory.make(&self.mem[((self.pc + 1) as usize)..]));
         }
-        bail!(NesError::DisassemblerFailure(format!("Instruction not found. opcode={:02x} pc={:04x}", op, self.pc)))
+        bail!(NesError::DisassemblerFailure(format!(
+            "Instruction not found. opcode={:02x} pc={:04x}",
+            op, self.pc
+        )))
     }
 
     pub fn run_once(&mut self) -> Result<(), NesError> {
         if self.halt {
-            bail!(NesError::HaltError{});
+            bail!(NesError::HaltError {});
         }
         let ins = self.decode()?;
         tracing::debug!("[pc={:04x}] running {:?}", self.pc, ins);
@@ -224,12 +222,13 @@ impl CPU {
     }
 
     pub fn run_with_callback<F>(&mut self, mut f: F) -> Result<(), NesError>
-        where F: FnMut(&mut CPU) -> Result<(), NesError> {
-        while !self.halt {
+    where
+        F: FnMut(&mut CPU) -> Result<(), NesError>,
+    {
+        loop {
             f(self)?;
             self.run_once()?;
         }
-        bail!(NesError::HaltError{});
     }
 
     pub fn get_stack_top_addr(&self) -> u16 {
@@ -289,13 +288,29 @@ pub struct CpuState {
 
 impl Debug for CpuState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let inst_bytes = self.inst.to_bytes().iter().map(|b| format!("{:02X}", b)).collect::<Vec<String>>().join(" ");
+        let inst_bytes = self
+            .inst
+            .to_bytes()
+            .iter()
+            .map(|b| format!("{:02X}", b))
+            .collect::<Vec<String>>()
+            .join(" ");
         // D10E  C1 80     CMP ($80,X) @ 80 = 0200 = 80    A:80 X:00 Y:69 P:A5 SP:FB
-        write!(f, "{:04X}  {:<8}  {:<11?}  {:<19} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
-            self.pc, inst_bytes, self.inst, self.inst_details.clone().unwrap_or_default(), self.a, self.x, self.y, self.flags.get(), self.sp)
+        write!(
+            f,
+            "{:04X}  {:<8}  {:<11?}  {:<19} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+            self.pc,
+            inst_bytes,
+            self.inst,
+            self.inst_details.clone().unwrap_or_default(),
+            self.a,
+            self.x,
+            self.y,
+            self.flags.get(),
+            self.sp
+        )
     }
 }
-
 
 #[derive(Error, Debug)]
 pub enum CpuStateParseError {
@@ -306,9 +321,9 @@ pub enum CpuStateParseError {
     #[error("Unknown opcode: {0}")]
     UnknownOpCode(u8),
     #[error("Bad instruction string: expect={expect}, actual={actual}")]
-    BadInstructionString{expect: String, actual: String},
+    BadInstructionString { expect: String, actual: String },
     #[error("Bad instruction bytes: expect={expect:?}, actual={actual:?}")]
-    BadInstructionBytes{expect: Vec<u8>, actual: Vec<u8>},
+    BadInstructionBytes { expect: Vec<u8>, actual: Vec<u8> },
 }
 
 impl FromStr for CpuState {
@@ -325,19 +340,30 @@ impl FromStr for CpuState {
         parts = &parts[1..];
         let opcode = u8::from_str_radix(parts[0], 16)
             .map_err(|_| CpuStateParseError::ParseIntError(parts[0].to_string()))?;
-        let factory = INST_FACTORIES_BY_OP_CODE.get(&opcode).ok_or_else(|| CpuStateParseError::UnknownOpCode(opcode))?;
+        let factory = INST_FACTORIES_BY_OP_CODE
+            .get(&opcode)
+            .ok_or_else(|| CpuStateParseError::UnknownOpCode(opcode))?;
         let len = factory.mode.get_inst_size() as usize;
-        let inst_bytes = parts[..len].iter()
-            .map(|b| u8::from_str_radix(b, 16).
-                map_err(|_| CpuStateParseError::ParseIntError(b.to_string())))
+        let inst_bytes = parts[..len]
+            .iter()
+            .map(|b| {
+                u8::from_str_radix(b, 16)
+                    .map_err(|_| CpuStateParseError::ParseIntError(b.to_string()))
+            })
             .collect::<std::result::Result<Vec<u8>, _>>()?;
         let inst = factory.make(&inst_bytes[1..len]);
-        let inst_bytes = parts[..len as usize].iter()
-                .map(|b|u8::from_str_radix(b, 16)
-                    .map_err(|_| CpuStateParseError::ParseIntError(b.to_string())))
-                .collect::<std::result::Result<Vec<u8>, _>>()?;
+        let inst_bytes = parts[..len as usize]
+            .iter()
+            .map(|b| {
+                u8::from_str_radix(b, 16)
+                    .map_err(|_| CpuStateParseError::ParseIntError(b.to_string()))
+            })
+            .collect::<std::result::Result<Vec<u8>, _>>()?;
         if inst_bytes != inst.to_bytes() {
-            return Err(CpuStateParseError::BadInstructionBytes{expect:inst_bytes, actual: inst.to_bytes()});
+            return Err(CpuStateParseError::BadInstructionBytes {
+                expect: inst_bytes,
+                actual: inst.to_bytes(),
+            });
         }
         parts = &parts[len..];
         let mut inst_str = inst.to_string(Some(pc));
@@ -347,9 +373,10 @@ impl FromStr for CpuState {
         }
         let inst_str_parts = inst_str.split_whitespace().collect::<Vec<&str>>();
         if &parts[..inst_str_parts.len()] != inst_str_parts.as_slice() {
-            return Err(CpuStateParseError::BadInstructionString{
+            return Err(CpuStateParseError::BadInstructionString {
                 expect: inst_str_parts.join(" "),
-                actual: parts[..inst_str_parts.len()].join(" ")});
+                actual: parts[..inst_str_parts.len()].join(" "),
+            });
         }
         parts = &parts[inst_str_parts.len()..];
         let mut res = CpuState {
@@ -378,7 +405,12 @@ impl FromStr for CpuState {
                     "Y" => res.y = value,
                     "P" => res.flags.value = value,
                     "SP" => res.sp = value,
-                    _ => return Err(CpuStateParseError::IllegalInput(format!("Unknown register: {}", key))),
+                    _ => {
+                        return Err(CpuStateParseError::IllegalInput(format!(
+                            "Unknown register: {}",
+                            key
+                        )))
+                    }
                 }
             }
         }

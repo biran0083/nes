@@ -1,7 +1,7 @@
-mod instructions;
-mod cpu;
 mod assembler;
+mod cpu;
 mod error;
+mod instructions;
 mod io;
 mod nes_format;
 
@@ -10,51 +10,64 @@ use std::io::BufRead;
 use std::io::BufReader;
 
 use assembler::AsmLine;
-use clap::{arg, Command};
 use assembler::Assembler;
+use clap::{arg, Command};
 use cpu::CpuState;
 use cpu::CPU;
 use error::NesError;
 use error_stack::bail;
-use instructions::disassemble;
 use error_stack::{Result, ResultExt};
+use instructions::disassemble;
 use io::read_file;
 use io::read_file_lines;
 use io::write_file;
 use nes_format::read_nes_file;
 use rand::Rng;
-use tracing::Level;
 use sdl2::event::Event;
-use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
-
+use sdl2::EventPump;
+use tracing::Level;
 
 fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
     for event in event_pump.poll_iter() {
         match event {
-            Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                std::process::exit(0)
-            },
-            Event::KeyDown { keycode: Some(Keycode::W), .. } => {
+            Event::Quit { .. }
+            | Event::KeyDown {
+                keycode: Some(Keycode::Escape),
+                ..
+            } => std::process::exit(0),
+            Event::KeyDown {
+                keycode: Some(Keycode::W),
+                ..
+            } => {
                 cpu.set_mem(0xff, 0x77);
-            },
-            Event::KeyDown { keycode: Some(Keycode::S), .. } => {
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::S),
+                ..
+            } => {
                 cpu.set_mem(0xff, 0x73);
-            },
-            Event::KeyDown { keycode: Some(Keycode::A), .. } => {
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::A),
+                ..
+            } => {
                 cpu.set_mem(0xff, 0x61);
-            },
-            Event::KeyDown { keycode: Some(Keycode::D), .. } => {
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::D),
+                ..
+            } => {
                 cpu.set_mem(0xff, 0x64);
             }
-            _ => {/* do nothing */}
+            _ => { /* do nothing */ }
         }
     }
- }
+}
 
- fn color(byte: u8) -> Color {
+fn color(byte: u8) -> Color {
     match byte {
         0 => sdl2::pixels::Color::BLACK,
         1 => sdl2::pixels::Color::WHITE,
@@ -66,9 +79,9 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
         7 | 14 => sdl2::pixels::Color::YELLOW,
         _ => sdl2::pixels::Color::CYAN,
     }
- }
+}
 
- fn read_screen_state(cpu: &CPU, frame: &mut [u8; 32 * 3 * 32]) -> bool {
+fn read_screen_state(cpu: &CPU, frame: &mut [u8; 32 * 3 * 32]) -> bool {
     let mut frame_idx = 0;
     let mut update = false;
     for i in 0x0200..0x600 {
@@ -83,7 +96,7 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
         frame_idx += 3;
     }
     update
- }
+}
 
 fn run_code(game_code: Vec<u8>, start_addr: u16) -> Result<(), NesError> {
     let sdl_context = sdl2::init().unwrap();
@@ -91,14 +104,16 @@ fn run_code(game_code: Vec<u8>, start_addr: u16) -> Result<(), NesError> {
     let window = video_subsystem
         .window("Snake game", (32.0 * 10.0) as u32, (32.0 * 10.0) as u32)
         .position_centered()
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     let mut canvas = window.into_canvas().present_vsync().build().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
     canvas.set_scale(10.0, 10.0).unwrap();
     let creator = canvas.texture_creator();
     let mut texture = creator
-        .create_texture_target(PixelFormatEnum::RGB24, 32, 32).unwrap();
+        .create_texture_target(PixelFormatEnum::RGB24, 32, 32)
+        .unwrap();
     let mut cpu = cpu::CPU::new();
     cpu.load_program(&game_code, start_addr);
     cpu.reset();
@@ -130,15 +145,17 @@ fn disassemble_file(file: &str) -> Result<(), NesError> {
 fn assemble_file(file_path: &str, start_addr: u16) -> Result<Vec<u8>, NesError> {
     let mut assembler = Assembler::new(start_addr);
     let lines = read_file_lines(file_path).change_context(NesError::Io)?;
-    let asm_lines = lines.iter().map(|s| s.parse::<AsmLine>()).collect::<std::result::Result<Vec<AsmLine>, NesError>>()?;
+    let asm_lines = lines
+        .iter()
+        .map(|s| s.parse::<AsmLine>())
+        .collect::<std::result::Result<Vec<AsmLine>, NesError>>()?;
     let bytes = assembler.assemble(&asm_lines)?;
     Ok(bytes.to_vec())
 }
 
 fn parse_int16(s: &str) -> Result<u16, NesError> {
-    if s.starts_with("0x") || s.starts_with("0X")  {
-        return u16::from_str_radix(&s[2..], 16)
-            .change_context(NesError::ParseInt);
+    if s.starts_with("0x") || s.starts_with("0X") {
+        return u16::from_str_radix(&s[2..], 16).change_context(NesError::ParseInt);
     }
     s.parse::<u16>().change_context(NesError::ParseInt)
 }
@@ -156,30 +173,68 @@ impl CpuStateReader {
 
     fn next(&mut self) -> Result<CpuState, NesError> {
         let mut line = String::new();
-        self.reader.read_line(&mut line).change_context(NesError::Io)?;
-        line.parse::<CpuState>().change_context(NesError::ParseCpuStateError)
+        if 0 == self
+            .reader
+            .read_line(&mut line)
+            .change_context(NesError::Io)?
+        {
+            bail!(NesError::EndOfFile);
+        }
+        line.parse::<CpuState>()
+            .change_context(NesError::ParseCpuStateError)
     }
 }
 
-fn test_code(code: Vec<u8>, start_addr: u16, mut state_reader: CpuStateReader) -> Result<(), NesError> {
+fn test_code(
+    code: Vec<u8>,
+    start_addr: u16,
+    mut state_reader: CpuStateReader,
+) -> Result<(), NesError> {
     let mut cpu = cpu::CPU::new();
     cpu.load_program(&code, start_addr);
     cpu.reset();
     cpu.pc = start_addr;
-    cpu.run_with_callback(|cpu| {
+    let res = cpu.run_with_callback(|cpu| {
         let state = cpu.trace()?;
-        let expected = state_reader.next()?;
-        assert_eq!(state, expected);
-        tracing::info!("passed: {:?}", state);
+        match state_reader.next() {
+            Ok(expected) => {
+                assert_eq!(state, expected);
+                tracing::info!("passed: {:?}", state);
+            }
+            Err(e) => {
+                if let Some(e) = e.downcast_ref::<NesError>() {
+                    match e {
+                        NesError::EndOfFile => {
+                            tracing::info!("All tests passed");
+                            cpu.halt();
+                        }
+                        _ => {
+                            bail!(NesError::TestFailed(format!("{:?}", e)));
+                        }
+                    }
+                }
+                return Ok(());
+            }
+        }
         Ok(())
-    })?;
-    Ok(())
+    });
+    return match &res {
+        Err(report) => {
+            if let Some(nes_error) = report.downcast_ref::<NesError>() {
+                match nes_error {
+                    NesError::HaltError => Ok(()),
+                    _ => res,
+                }
+            } else {
+                res
+            }
+        }
+        Ok(_) => Ok(()),
+    };
 }
 
-fn main() -> Result<(), NesError>{
-    tracing_subscriber::fmt()
-        .with_max_level(Level::INFO)
-        .init();
+fn main() -> Result<(), NesError> {
+    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
     let matches = Command::new("NES Emulator")
         .version("1.0")
         .author("Ran Bi")
@@ -187,41 +242,35 @@ fn main() -> Result<(), NesError>{
         .subcommand(
             Command::new("run")
                 .about("Runs the specified file")
-                .arg(arg!(--start <ADDRESS> "The start address for assembling")
-                    .default_value("0x0600")
-                    .required(false))
-                .arg(arg!(<FILE> "The file to run")
-                    .required(true)
-                    .index(1))
+                .arg(
+                    arg!(--start <ADDRESS> "The start address for assembling")
+                        .default_value("0x0600")
+                        .required(false),
+                )
+                .arg(arg!(<FILE> "The file to run").required(true).index(1)),
         )
         .subcommand(
             Command::new("disassemble")
                 .about("Disassembles the specified file")
-                .arg(arg!(<FILE> "The file to disassemble")
-                    .required(true)
-                    .index(1))
+                .arg(
+                    arg!(<FILE> "The file to disassemble")
+                        .required(true)
+                        .index(1),
+                ),
         )
         .subcommand(
             Command::new("assemble")
                 .about("Assembles the specified file")
-                .arg(arg!(--start <ADDRESS> "The start address for assembling")
-                    .required(false))
-                .arg(arg!(--out <OUT> "The output file")
-                    .required(true))
-                .arg(arg!(<FILE> "The file to assemble")
-                    .required(true)
-                    .index(1))
+                .arg(arg!(--start <ADDRESS> "The start address for assembling").required(false))
+                .arg(arg!(--out <OUT> "The output file").required(true))
+                .arg(arg!(<FILE> "The file to assemble").required(true).index(1)),
         )
         .subcommand(
             Command::new("test")
                 .about("Run program in test mode")
-                .arg(arg!(--start <ADDRESS> "The start address for assembling")
-                    .required(false))
-                .arg(arg!(--out <OUT> "The output for cpu traces")
-                    .required(true))
-                .arg(arg!(<FILE> "The file to test")
-                    .required(true)
-                    .index(1))
+                .arg(arg!(--start <ADDRESS> "The start address for assembling").required(false))
+                .arg(arg!(--out <OUT> "The output for cpu traces").required(true))
+                .arg(arg!(<FILE> "The file to test").required(true).index(1)),
         )
         .get_matches();
     match matches.subcommand() {
@@ -241,11 +290,11 @@ fn main() -> Result<(), NesError>{
             } else {
                 bail!(NesError::InvalidFileExtension(file.to_string()));
             }
-        },
+        }
         Some(("disassemble", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();
             disassemble_file(file)?;
-        },
+        }
         Some(("assemble", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();
             let output_file = sub_m.get_one::<String>("out").unwrap();
@@ -253,7 +302,7 @@ fn main() -> Result<(), NesError>{
                 .change_context(NesError::ParseInt)?;
             let bytes = assemble_file(file, start)?;
             write_file(output_file, &bytes).change_context(NesError::Io)?;
-        },
+        }
         Some(("test", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();
             let trace_log_file = sub_m.get_one::<String>("out").unwrap();
@@ -261,7 +310,11 @@ fn main() -> Result<(), NesError>{
                 .change_context(NesError::ParseInt)?;
             if file.ends_with(".nes") {
                 let nes_file = read_nes_file(file).change_context(NesError::Io)?;
-                test_code(nes_file.prg_rom, start, CpuStateReader::new(trace_log_file)?)?;
+                test_code(
+                    nes_file.prg_rom,
+                    start,
+                    CpuStateReader::new(trace_log_file)?,
+                )?;
             } else {
                 bail!(NesError::InvalidFileExtension(file.to_string()));
             }

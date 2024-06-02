@@ -1,4 +1,3 @@
-
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -19,4 +18,8 @@ pub enum NesError {
     ParseCpuStateError,
     #[error("CPU halted")]
     HaltError,
+    #[error("Reach end of the state file")]
+    EndOfFile,
+    #[error("Test failed: {0}")]
+    TestFailed(String),
 }
