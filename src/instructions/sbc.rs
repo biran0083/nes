@@ -10,6 +10,7 @@ pub const RUN : InstFun = |ins, cpu| {
 
 pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
         (0xE9, AddressingMode::Immediate),
+        (0xEB, AddressingMode::Immediate),
         (0xE5, AddressingMode::ZeroPage),
         (0xF5, AddressingMode::ZeroPageX),
         (0xED, AddressingMode::Absolute),

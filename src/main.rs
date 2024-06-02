@@ -178,7 +178,7 @@ fn test_code(code: Vec<u8>, start_addr: u16, mut state_reader: CpuStateReader) -
 
 fn main() -> Result<(), NesError>{
     tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
+        .with_max_level(Level::INFO)
         .init();
     let matches = Command::new("NES Emulator")
         .version("1.0")

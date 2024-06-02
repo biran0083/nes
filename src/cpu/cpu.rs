@@ -291,7 +291,7 @@ impl Debug for CpuState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let inst_bytes = self.inst.to_bytes().iter().map(|b| format!("{:02X}", b)).collect::<Vec<String>>().join(" ");
         // D10E  C1 80     CMP ($80,X) @ 80 = 0200 = 80    A:80 X:00 Y:69 P:A5 SP:FB
-        write!(f, "{:04X}  {:<8}  {:<11?} {:<19} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+        write!(f, "{:04X}  {:<8}  {:<11?}  {:<19} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
             self.pc, inst_bytes, self.inst, self.inst_details.clone().unwrap_or_default(), self.a, self.x, self.y, self.flags.get(), self.sp)
     }
 }

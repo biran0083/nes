@@ -19,8 +19,8 @@ pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
         (0xCF, AddressingMode::Absolute),
         (0xDF, AddressingMode::AbsoluteX),
         (0xDB, AddressingMode::AbsoluteY),
-        (0xC3, AddressingMode::IndirectIndexed),
-        (0xD3, AddressingMode::IndexedIndirect),
+        (0xC3, AddressingMode::IndexedIndirect),
+        (0xD3, AddressingMode::IndirectIndexed),
     ];
 
 #[cfg(test)]
