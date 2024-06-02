@@ -18,6 +18,7 @@ use error::NesError;
 use error_stack::bail;
 use error_stack::{Result, ResultExt};
 use instructions::disassemble;
+use instructions::INST_FACTORIES_BY_OP_CODE;
 use io::read_file;
 use io::read_file_lines;
 use io::write_file;
@@ -315,6 +316,12 @@ fn main() -> Result<(), NesError> {
                     start,
                     CpuStateReader::new(trace_log_file)?,
                 )?;
+                println!("instruction count: {}", INST_FACTORIES_BY_OP_CODE.len());
+                for i in 0..256 {
+                    if !INST_FACTORIES_BY_OP_CODE.contains_key(&(i as u8)) {
+                        println!("instruction not found: {:02x}", i);
+                    }
+                }
             } else {
                 bail!(NesError::InvalidFileExtension(file.to_string()));
             }
