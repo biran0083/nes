@@ -4,10 +4,13 @@ mod error;
 mod instructions;
 mod io;
 mod nes_format;
+mod ppu;
+mod screen;
 
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::time::Duration;
 
 use assembler::AsmLine;
 use assembler::Assembler;
@@ -23,7 +26,11 @@ use io::read_file;
 use io::read_file_lines;
 use io::write_file;
 use nes_format::read_nes_file;
+use ppu::SYSTEM_PALLETE;
+use ppu::TILE_HEIGHT;
+use ppu::TILE_WIDTH;
 use rand::Rng;
+use screen::{ScreenState, SCREEN_HEIGHT, SCREEN_WIDTH};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -234,6 +241,80 @@ fn test_code(
     };
 }
 
+fn show_tiles(nes_file: &nes_format::NesFile) -> Result<(), NesError> {
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+    let window = video_subsystem
+        .window(
+            "Tiles",
+            (SCREEN_WIDTH * 3) as u32,
+            (SCREEN_HEIGHT * 3) as u32,
+        )
+        .position_centered()
+        .build()
+        .unwrap();
+
+    let mut canvas = window.into_canvas().present_vsync().build().unwrap();
+    canvas.set_scale(10.0, 10.0).unwrap();
+    let creator = canvas.texture_creator();
+    let mut texture = creator
+        .create_texture_target(
+            PixelFormatEnum::RGB24,
+            SCREEN_WIDTH as u32,
+            SCREEN_HEIGHT as u32,
+        )
+        .unwrap();
+    let mut screen_state = ScreenState::new();
+    let mut base_x: usize = 0;
+    let mut base_y: usize = 0;
+    let padding = 1;
+    for tile_data in nes_file.chr_rom.chunks(16) {
+        let tile = ppu::Tile::new(tile_data);
+        for x in 0..8 {
+            for y in 0..8 {
+                let color_idx = tile.get_pixel_index(x, y);
+                let color = match color_idx {
+                    0 => (255, 255, 255),
+                    1 => (255, 0, 0),
+                    2 => (0, 255, 0),
+                    3 => (0, 0, 255),
+                    _ => bail!(NesError::InvalidColorIndex(color_idx)),
+                };
+                screen_state.update(base_x + x as usize, base_y + y as usize, color);
+            }
+        }
+        base_x += TILE_WIDTH + padding;
+        if base_x + TILE_WIDTH >= SCREEN_WIDTH {
+            base_x = 0;
+            base_y += TILE_HEIGHT + padding;
+        }
+        if base_y + 8 >= SCREEN_HEIGHT {
+            break;
+        }
+    }
+    screen_state.update(0, 1, SYSTEM_PALLETE[1]);
+    texture
+        .update(None, screen_state.get_picxel_data(), SCREEN_WIDTH * 3)
+        .unwrap();
+    canvas.copy(&texture, None, None).unwrap();
+    canvas.present();
+    let mut event_pump = sdl_context.event_pump().unwrap();
+    'running: loop {
+        for event in event_pump.poll_iter() {
+            match event {
+                sdl2::event::Event::Quit { .. }
+                | sdl2::event::Event::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::Escape),
+                    ..
+                } => break 'running,
+                _ => {}
+            }
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), NesError> {
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
     let matches = Command::new("NES Emulator")
@@ -265,6 +346,11 @@ fn main() -> Result<(), NesError> {
                 .arg(arg!(--start <ADDRESS> "The start address for assembling").required(false))
                 .arg(arg!(--out <OUT> "The output file").required(true))
                 .arg(arg!(<FILE> "The file to assemble").required(true).index(1)),
+        )
+        .subcommand(
+            Command::new("show_tiles")
+                .about("Show tiles of an nes file")
+                .arg(arg!(<FILE> "The file to test").required(true).index(1)),
         )
         .subcommand(
             Command::new("test")
@@ -304,6 +390,11 @@ fn main() -> Result<(), NesError> {
             let bytes = assemble_file(file, start)?;
             write_file(output_file, &bytes).change_context(NesError::Io)?;
         }
+        Some(("show_tiles", sub_m)) => {
+            let file = sub_m.get_one::<String>("FILE").unwrap();
+            let nes_file = read_nes_file(file).change_context(NesError::Io)?;
+            show_tiles(&nes_file)?;
+        }
         Some(("test", sub_m)) => {
             let file = sub_m.get_one::<String>("FILE").unwrap();
             let trace_log_file = sub_m.get_one::<String>("out").unwrap();
@@ -319,7 +410,7 @@ fn main() -> Result<(), NesError> {
                 println!("instruction count: {}", INST_FACTORIES_BY_OP_CODE.len());
                 for i in 0..256 {
                     if !INST_FACTORIES_BY_OP_CODE.contains_key(&(i as u8)) {
-                        println!("instruction not found: {:02x}", i);
+                        println!("missing instruction: {:#02x}", i);
                     }
                 }
             } else {

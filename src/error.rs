@@ -22,4 +22,6 @@ pub enum NesError {
     EndOfFile,
     #[error("Test failed: {0}")]
     TestFailed(String),
+    #[error("Invalid color index: {0}")]
+    InvalidColorIndex(u8),
 }
