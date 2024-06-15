@@ -1,4 +1,5 @@
 mod assembler;
+mod bus;
 mod cpu;
 mod error;
 mod instructions;

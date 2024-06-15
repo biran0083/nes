@@ -1,11 +1,6 @@
-
-
-use std::collections::HashMap;
 use crate::instructions::INSTRUCTIONS;
-use crate::{
-    cpu::addressing_mode::AddressingMode,
-    cpu::CPU,
-};
+use crate::{cpu::addressing_mode::AddressingMode, cpu::CPU};
+use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
@@ -21,7 +16,6 @@ pub struct Inst {
 }
 
 impl Inst {
-
     pub fn run(&self, cpu: &mut CPU) {
         (self.f)(self, cpu)
     }
@@ -34,8 +28,7 @@ impl Inst {
         let mut bytes = Vec::new();
         bytes.push(self.opcode);
         match self.mode {
-            AddressingMode::Implied |
-            AddressingMode::Accumulator => {}
+            AddressingMode::Implied | AddressingMode::Accumulator => {}
             AddressingMode::Immediate
             | AddressingMode::Relative
             | AddressingMode::ZeroPage
@@ -101,17 +94,15 @@ impl std::fmt::Debug for Inst {
     }
 }
 
-
-
 #[macro_export]
 macro_rules! define_flag_inst {
     ($opcode: expr, $flag: expr, $value: expr) => {
-        use crate::cpu::addressing_mode::AddressingMode;
         use super::InstFun;
+        use crate::cpu::addressing_mode::AddressingMode;
         use crate::cpu::Flag::*;
         use crate::cpu::Setter;
 
-        pub const RUN : InstFun = |ins, cpu| {
+        pub const RUN: InstFun = |ins, cpu| {
             $flag.set(cpu, $value);
             cpu.pc += ins.len();
         };
@@ -125,10 +116,12 @@ macro_rules! define_flag_inst {
             #[test]
             fn test_brk() {
                 let mut runner = TestRunner::new();
-                runner.set($flag, !$value)
+                runner
+                    .set($flag, !$value)
                     .load_and_test(&[$opcode])
                     .verify($flag, $value);
-                runner.set($flag, $value)
+                runner
+                    .set($flag, $value)
                     .load_and_test(&[$opcode])
                     .verify($flag, $value);
             }
@@ -139,49 +132,43 @@ macro_rules! define_flag_inst {
 #[macro_export]
 macro_rules! define_jump_inst {
     ($opcode: expr, $flag: expr, $value: expr) => {
-        use crate::cpu::addressing_mode::{load_operand, AddressingMode};
-        use crate::cpu::CPU;
         use super::InstFun;
+        use crate::cpu::addressing_mode::{load_operand, AddressingMode};
         use crate::cpu::Flag::*;
         use crate::cpu::Retriever;
+        use crate::cpu::CPU;
 
-        pub const RUN : InstFun = |ins, cpu: &mut CPU| {
-            let operand : i8 = load_operand(ins.mode, cpu, ins.param.unwrap()) as i8;
+        pub const RUN: InstFun = |ins, cpu: &mut CPU| {
+            let operand: i8 = load_operand(ins.mode, cpu, ins.param.unwrap()) as i8;
             if $flag.get(cpu) == $value {
                 cpu.pc = cpu.pc.wrapping_add(operand as u16);
             }
             cpu.pc = cpu.pc.wrapping_add(ins.len());
         };
 
-        pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[
-                ($opcode, AddressingMode::Relative),
-            ];
+        pub const OPCODE_MAP: &[(u8, AddressingMode)] = &[($opcode, AddressingMode::Relative)];
 
         #[cfg(test)]
         mod test {
             use crate::cpu::test_util::TestRunner;
-            use crate::cpu::Register16::*;
             use crate::cpu::Flag::*;
+            use crate::cpu::Register16::*;
 
             #[test]
             fn test_relative() {
                 let mut runner = TestRunner::new();
                 runner.set($flag, $value);
                 runner.set(PC, 0x8000);
-                runner.load_and_test(&[$opcode, 0x01])
-                    .verify(PC, 0x8003);
+                runner.load_and_test(&[$opcode, 0x01]).verify(PC, 0x8003);
                 runner.set(PC, 0x8000);
-                runner.load_and_test(&[$opcode, 0x80])
-                    .verify(PC, 0x7f82);
+                runner.load_and_test(&[$opcode, 0x80]).verify(PC, 0x7f82);
                 runner.set(PC, 0x8000);
-                runner.load_and_test(&[$opcode, 0xff])
-                    .verify(PC, 0x8001);
+                runner.load_and_test(&[$opcode, 0xff]).verify(PC, 0x8001);
                 runner.set($flag, !$value);
-                runner.load_and_test(&[$opcode, 0xff])
-                    .verify(PC, 0x8002);
+                runner.load_and_test(&[$opcode, 0xff]).verify(PC, 0x8002);
             }
         }
-    }
+    };
 }
 
 #[cfg(test)]
@@ -197,12 +184,15 @@ pub fn get_opcode(opcode_map: &[(u8, AddressingMode)], mode: AddressingMode) -> 
 #[macro_export]
 macro_rules! defube_cmp_inst {
     ($reg: expr, $opcode_map: expr) => {
-        use crate::cpu::{addressing_mode::{load_operand, AddressingMode}, Flag, Setter};
         use super::InstFun;
         use crate::cpu::Register8::*;
         use crate::cpu::Retriever;
+        use crate::cpu::{
+            addressing_mode::{load_operand, AddressingMode},
+            Flag, Setter,
+        };
 
-        pub const RUN : InstFun = |ins, cpu| {
+        pub const RUN: InstFun = |ins, cpu| {
             let operand = load_operand(ins.mode, cpu, ins.param.unwrap());
             let res = $reg.get(&cpu).wrapping_sub(operand);
             Flag::C.set(cpu, $reg.get(&cpu) >= operand);
@@ -215,53 +205,56 @@ macro_rules! defube_cmp_inst {
 
         #[cfg(test)]
         mod test {
-            use crate::cpu::test_util::TestRunner;
-            use crate::cpu::Register8::*;
-            use crate::cpu::Flag::*;
-            use crate::cpu::addressing_mode::AddressingMode;
-            use crate::instructions::common::get_opcode;
             use super::OPCODE_MAP;
-
+            use crate::cpu::addressing_mode::AddressingMode;
+            use crate::cpu::test_util::TestRunner;
+            use crate::cpu::Flag::*;
+            use crate::cpu::Register8::*;
+            use crate::instructions::common::get_opcode;
 
             #[test]
             fn test_immediate() {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::Immediate).unwrap();
                 runner.set($reg, 0x01);
-                runner.load_and_test(&[opcode, 0x01])
+                runner
+                    .load_and_test(&[opcode, 0x01])
                     .verify(C, true)
                     .verify(Z, true)
                     .verify(N, false);
                 runner.set($reg, 0xff);
-                runner.load_and_test(&[opcode, 0x00])
+                runner
+                    .load_and_test(&[opcode, 0x00])
                     .verify(C, true)
                     .verify(Z, false)
                     .verify(N, true);
                 runner.set($reg, 0x03);
-                runner.load_and_test(&[opcode, 0x02])
+                runner
+                    .load_and_test(&[opcode, 0x02])
                     .verify(C, true)
                     .verify(Z, false)
                     .verify(N, false);
                 runner.set($reg, 0x02);
-                runner.load_and_test(&[opcode, 0x03])
+                runner
+                    .load_and_test(&[opcode, 0x03])
                     .verify(C, false)
                     .verify(Z, false)
                     .verify(N, true);
             }
         }
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! define_ld_inst {
     ($reg: expr, $opcode_map: expr) => {
-        use crate::cpu::addressing_mode::{load_operand, AddressingMode};
-        use crate::cpu::CPU;
         use super::InstFun;
+        use crate::cpu::addressing_mode::{load_operand, AddressingMode};
         use crate::cpu::Register8::*;
         use crate::cpu::Setter;
+        use crate::cpu::CPU;
 
-        pub const RUN : InstFun = |ins, cpu: &mut CPU| {
+        pub const RUN: InstFun = |ins, cpu: &mut CPU| {
             let value = load_operand(ins.mode, cpu, ins.param.unwrap());
             $reg.set(cpu, value);
             cpu.update_z(value);
@@ -273,26 +266,29 @@ macro_rules! define_ld_inst {
 
         #[cfg(test)]
         mod test {
-            use crate::cpu::test_util::TestRunner;
-            use crate::cpu::Register8::*;
-            use crate::cpu::Flag::*;
             use super::OPCODE_MAP;
             use crate::cpu::addressing_mode::AddressingMode;
+            use crate::cpu::test_util::TestRunner;
+            use crate::cpu::Flag::*;
+            use crate::cpu::Register8::*;
             use crate::instructions::common::get_opcode;
 
             #[test]
             fn test_immediate() {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::Immediate).unwrap();
-                runner.load_and_test(&[opcode, 0x00])
+                runner
+                    .load_and_test(&[opcode, 0x00])
                     .verify($reg, 0)
                     .verify(Z, true)
                     .verify(N, false);
-                runner.load_and_test(&[opcode, 0x01])
+                runner
+                    .load_and_test(&[opcode, 0x01])
                     .verify($reg, 1)
                     .verify(Z, false)
                     .verify(N, false);
-                runner.load_and_test(&[opcode, 0x91])
+                runner
+                    .load_and_test(&[opcode, 0x91])
                     .verify($reg, 0x91)
                     .verify(Z, false)
                     .verify(N, true);
@@ -302,17 +298,20 @@ macro_rules! define_ld_inst {
             fn test_zero_page() {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::ZeroPage).unwrap();
-                runner.load_and_test(&[opcode, 0x01])
+                runner
+                    .load_and_test(&[opcode, 0x01])
                     .verify($reg, 0)
                     .verify(Z, true)
                     .verify(N, false);
                 runner.set_mem(0x01, 10);
-                runner.load_and_test(&[opcode, 0x01])
+                runner
+                    .load_and_test(&[opcode, 0x01])
                     .verify($reg, 10)
                     .verify(Z, false)
                     .verify(N, false);
                 runner.set_mem(0x01, 0xff);
-                runner.load_and_test(&[opcode, 0x01])
+                runner
+                    .load_and_test(&[opcode, 0x01])
                     .verify($reg, 0xff)
                     .verify(Z, false)
                     .verify(N, true);
@@ -323,21 +322,24 @@ macro_rules! define_ld_inst {
                 let mut runner = TestRunner::new();
                 if let Some(opcode) = get_opcode(OPCODE_MAP, AddressingMode::ZeroPageX) {
                     runner.set_mem(0x01, 0x00);
-                    runner.load_and_test(&[opcode, 0x01])
+                    runner
+                        .load_and_test(&[opcode, 0x01])
                         .verify($reg, 0)
                         .verify(Z, true)
                         .verify(N, false);
                     runner.set(X, 2);
 
                     runner.set_mem(0x03, 10);
-                    runner.load_and_test(&[opcode, 0x01])
+                    runner
+                        .load_and_test(&[opcode, 0x01])
                         .verify($reg, 10)
                         .verify(Z, false)
                         .verify(N, false);
 
                     runner.set(X, 0x80);
                     runner.set_mem(0x7f, 0xff);
-                    runner.load_and_test(&[opcode, 0xff])
+                    runner
+                        .load_and_test(&[opcode, 0xff])
                         .verify($reg, 0xff)
                         .verify(Z, false)
                         .verify(N, true);
@@ -349,7 +351,8 @@ macro_rules! define_ld_inst {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::Absolute).unwrap();
                 runner.set_mem(0x1234, 0x11);
-                runner.load_and_test(&[opcode, 0x34, 0x12])
+                runner
+                    .load_and_test(&[opcode, 0x34, 0x12])
                     .verify($reg, 0x11)
                     .verify(Z, false)
                     .verify(N, false);
@@ -361,7 +364,8 @@ macro_rules! define_ld_inst {
                 if let Some(opcode) = get_opcode(OPCODE_MAP, AddressingMode::AbsoluteX) {
                     runner.set_mem(0x1235, 0xf0);
                     runner.set(X, 1);
-                    runner.load_and_test(&[opcode, 0x34, 0x12])
+                    runner
+                        .load_and_test(&[opcode, 0x34, 0x12])
                         .verify($reg, 0xf0)
                         .verify(Z, false)
                         .verify(N, true);
@@ -374,7 +378,8 @@ macro_rules! define_ld_inst {
                 if let Some(opcode) = get_opcode(OPCODE_MAP, AddressingMode::AbsoluteY) {
                     runner.set_mem(0x1236, 0x13);
                     runner.set(Y, 2);
-                    runner.load_and_test(&[opcode, 0x34, 0x12])
+                    runner
+                        .load_and_test(&[opcode, 0x34, 0x12])
                         .verify($reg, 0x13)
                         .verify(Z, false)
                         .verify(N, false);
@@ -389,7 +394,8 @@ macro_rules! define_ld_inst {
                     runner.set_mem(0x21, 0x12);
                     runner.set_mem(0x22, 0x34);
                     runner.set_mem(0x3412, 0x56);
-                    runner.load_and_test(&[opcode, 0x10])
+                    runner
+                        .load_and_test(&[opcode, 0x10])
                         .verify($reg, 0x56)
                         .verify(Z, false)
                         .verify(N, false);
@@ -404,13 +410,13 @@ macro_rules! define_ld_inst {
                     runner.set_mem(0x10, 0x23);
                     runner.set_mem(0x11, 0x20);
                     runner.set_mem(0x2024, 0x45);
-                    runner.load_and_test(&[opcode, 0x10])
+                    runner
+                        .load_and_test(&[opcode, 0x10])
                         .verify($reg, 0x45)
                         .verify(Z, false)
                         .verify(N, false);
                 }
             }
-
         }
     };
 }
@@ -418,12 +424,12 @@ macro_rules! define_ld_inst {
 #[macro_export]
 macro_rules! define_st_inst {
     ($reg: expr, $opcode_map: expr) => {
-        use crate::cpu::addressing_mode::{load_operand_addr, AddressingMode};
         use super::InstFun;
+        use crate::cpu::addressing_mode::{load_operand_addr, AddressingMode};
         use crate::cpu::Register8::*;
         use crate::cpu::Retriever;
 
-        pub const RUN : InstFun = |ins, cpu| {
+        pub const RUN: InstFun = |ins, cpu| {
             let addr = load_operand_addr(ins.mode, cpu, ins.param.unwrap());
             cpu.set_mem(addr, $reg.get(cpu));
             cpu.pc += ins.len();
@@ -433,16 +439,17 @@ macro_rules! define_st_inst {
 
         #[cfg(test)]
         mod tests {
+            use super::*;
             use crate::cpu::test_util::TestRunner;
             use crate::cpu::Mem;
-            use super::*;
             use crate::instructions::common::get_opcode;
 
             #[test]
             fn test_brk() {
                 let mut runner = TestRunner::new();
                 let opcode = get_opcode(OPCODE_MAP, AddressingMode::ZeroPage).unwrap();
-                runner.set($reg, 0x34)
+                runner
+                    .set($reg, 0x34)
                     .load_and_test(&[opcode, 0x12])
                     .verify(Mem::new(0x12), 0x34);
             }
@@ -456,13 +463,13 @@ macro_rules! define_t_inst {
         define_t_inst!($src, $dst, $opcode_map, true);
     };
     ($src: expr, $dst: expr, $opcode_map: expr, $update_status: expr) => {
-        use crate::cpu::addressing_mode::AddressingMode;
         use super::InstFun;
+        use crate::cpu::addressing_mode::AddressingMode;
         use crate::cpu::Register8::*;
         use crate::cpu::Retriever;
         use crate::cpu::Setter;
 
-        pub const RUN : InstFun = |ins, cpu| {
+        pub const RUN: InstFun = |ins, cpu| {
             let value = $src.get(cpu);
             $dst.set(cpu, value);
             if ($update_status) {
@@ -476,10 +483,10 @@ macro_rules! define_t_inst {
 
         #[cfg(test)]
         mod test {
+            use super::*;
             use crate::cpu::test_util::TestRunner;
             use crate::cpu::Flag::*;
             use crate::cpu::Register8::*;
-            use super::*;
             use crate::instructions::common::get_opcode;
 
             #[test]
@@ -540,7 +547,7 @@ impl Iterator for InstIter {
         }
         let op = self.bytes[self.idx];
         if let Some(factory) = INST_FACTORIES_BY_OP_CODE.get(&op) {
-            let inst = factory.make(&self.bytes[(self.idx + 1)..]);
+            let inst = factory.make(self.bytes[(self.idx + 1)..].iter().cloned());
             self.idx += inst.len() as usize;
             Some(inst)
         } else {
@@ -566,11 +573,15 @@ pub fn adc_helper(b: u8, cpu: &mut CPU) {
 pub struct InstructionInfo {
     name: String,
     f: InstFun,
-    opcode_to_addressing_mode: &'static[(u8, AddressingMode)],
+    opcode_to_addressing_mode: &'static [(u8, AddressingMode)],
 }
 
 impl InstructionInfo {
-    pub fn new(name: String, f: InstFun, opcode_to_addressing_mode: &'static[(u8, AddressingMode)]) -> Self {
+    pub fn new(
+        name: String,
+        f: InstFun,
+        opcode_to_addressing_mode: &'static [(u8, AddressingMode)],
+    ) -> Self {
         InstructionInfo {
             name,
             f,
@@ -600,7 +611,6 @@ macro_rules! define_instructions {
     };
 }
 
-
 lazy_static! {
     pub static ref INST_FACTORIES_BY_OP_CODE: HashMap<u8, InstFactory> = {
         let mut inst_factory_by_op_code: HashMap<u8, InstFactory> = HashMap::new();
@@ -622,9 +632,9 @@ lazy_static! {
         }
         inst_factory_by_op_code
     };
-
     pub static ref INST_FACTORIES_BY_NAME_MODE: HashMap<(String, AddressingMode), InstFactory> = {
-        let mut inst_factory_by_name_mode: HashMap<(String, AddressingMode), InstFactory> = HashMap::new();
+        let mut inst_factory_by_name_mode: HashMap<(String, AddressingMode), InstFactory> =
+            HashMap::new();
         for info in INSTRUCTIONS.iter() {
             for (op, mode) in info.opcode_to_addressing_mode {
                 let res = inst_factory_by_name_mode.insert(
@@ -646,7 +656,7 @@ lazy_static! {
 }
 
 pub struct InstFactory {
-    pub opcode : u8,
+    pub opcode: u8,
     pub name: String,
     pub mode: AddressingMode,
     pub f: InstFun,
@@ -655,8 +665,8 @@ pub struct InstFactory {
 impl InstFactory {
     // Create an instruction from the given bytes.
     // Bytes does not include the opcode.
-    pub fn make(&self, bytes: &[u8]) -> Inst {
-        self.make2(self.mode.read_param(bytes))
+    pub fn make(&self, bs: impl Iterator<Item = u8>) -> Inst {
+        self.make2(self.mode.read_param(bs))
     }
 
     pub fn make2(&self, param: Option<u16>) -> Inst {

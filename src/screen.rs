@@ -1,5 +1,5 @@
 pub const SCREEN_HEIGHT: usize = 240;
-pub const SCREEN_WIDTH: usize = 320;
+pub const SCREEN_WIDTH: usize = 256;
 
 pub struct ScreenState {
     screen_state: [u8; SCREEN_HEIGHT * SCREEN_WIDTH * 3],

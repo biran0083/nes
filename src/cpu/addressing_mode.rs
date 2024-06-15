@@ -20,39 +20,37 @@ pub enum AddressingMode {
 impl AddressingMode {
     pub fn get_inst_size(&self) -> u16 {
         match *self {
-            AddressingMode::Implied |
-            AddressingMode::Accumulator => 1,
-            AddressingMode::Immediate |
-            AddressingMode::ZeroPage |
-            AddressingMode::ZeroPageX |
-            AddressingMode::ZeroPageY |
-            AddressingMode::IndexedIndirect |
-            AddressingMode::IndirectIndexed |
-            AddressingMode::Relative => 2,
-            AddressingMode::Absolute |
-            AddressingMode::AbsoluteX |
-            AddressingMode::AbsoluteY |
-            AddressingMode::Indirect => 3,
+            AddressingMode::Implied | AddressingMode::Accumulator => 1,
+            AddressingMode::Immediate
+            | AddressingMode::ZeroPage
+            | AddressingMode::ZeroPageX
+            | AddressingMode::ZeroPageY
+            | AddressingMode::IndexedIndirect
+            | AddressingMode::IndirectIndexed
+            | AddressingMode::Relative => 2,
+            AddressingMode::Absolute
+            | AddressingMode::AbsoluteX
+            | AddressingMode::AbsoluteY
+            | AddressingMode::Indirect => 3,
         }
     }
 
-    pub fn read_param(&self,  bytes: &[u8]) -> Option<u16> {
+    pub fn read_param(&self, mut bs: impl Iterator<Item = u8>) -> Option<u16> {
         match *self {
-            AddressingMode::Implied |
-            AddressingMode::Accumulator => None,
+            AddressingMode::Implied | AddressingMode::Accumulator => None,
             AddressingMode::Immediate
             | AddressingMode::Relative
             | AddressingMode::ZeroPage
             | AddressingMode::ZeroPageX
             | AddressingMode::ZeroPageY
             | AddressingMode::IndexedIndirect
-            | AddressingMode::IndirectIndexed => Some(bytes[0] as u16),
+            | AddressingMode::IndirectIndexed => Some(bs.next().unwrap() as u16),
             AddressingMode::Absolute
             | AddressingMode::Indirect
             | AddressingMode::AbsoluteX
             | AddressingMode::AbsoluteY => {
-                let lsb: u16 = bytes[0] as u16;
-                let msb: u16 = bytes[1] as u16;
+                let lsb: u16 = bs.next().unwrap() as u16;
+                let msb: u16 = bs.next().unwrap() as u16;
                 Some((msb << 8) + lsb)
             }
         }
@@ -61,24 +59,22 @@ impl AddressingMode {
 
 pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
     match mode {
-        AddressingMode::Indirect |
-        AddressingMode::Implied => {
+        AddressingMode::Indirect | AddressingMode::Implied => {
             panic!("load_operand should not be called for Implied instruction")
         }
         AddressingMode::Accumulator => cpu.a,
-        AddressingMode::Relative |
-        AddressingMode::Immediate => {
+        AddressingMode::Relative | AddressingMode::Immediate => {
             assert!(param <= 0xff);
             param as u8
         }
-        AddressingMode::ZeroPage |
-        AddressingMode::ZeroPageX |
-        AddressingMode::ZeroPageY |
-        AddressingMode::Absolute |
-        AddressingMode::AbsoluteX |
-        AddressingMode::AbsoluteY |
-        AddressingMode::IndexedIndirect |
-        AddressingMode::IndirectIndexed => {
+        AddressingMode::ZeroPage
+        | AddressingMode::ZeroPageX
+        | AddressingMode::ZeroPageY
+        | AddressingMode::Absolute
+        | AddressingMode::AbsoluteX
+        | AddressingMode::AbsoluteY
+        | AddressingMode::IndexedIndirect
+        | AddressingMode::IndirectIndexed => {
             let addr = load_operand_addr(mode, cpu, param);
             cpu.get_mem(addr)
         }
@@ -87,11 +83,14 @@ pub fn load_operand(mode: AddressingMode, cpu: &CPU, param: u16) -> u8 {
 
 pub fn load_operand_addr(mode: AddressingMode, cpu: &CPU, param: u16) -> u16 {
     match mode {
-        AddressingMode::Accumulator|
-        AddressingMode::Relative |
-        AddressingMode::Immediate |
-        AddressingMode::Implied => {
-            panic!("load_operand_addr should not be called for {:?} instruction", mode)
+        AddressingMode::Accumulator
+        | AddressingMode::Relative
+        | AddressingMode::Immediate
+        | AddressingMode::Implied => {
+            panic!(
+                "load_operand_addr should not be called for {:?} instruction",
+                mode
+            )
         }
         AddressingMode::Indirect => {
             let lo = cpu.get_mem(param) as u16;

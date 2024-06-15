@@ -1,8 +1,10 @@
 use std::{fmt::Debug, str::FromStr};
 
 use crate::{
+    bus::Bus,
     error::NesError,
     instructions::{Inst, INST_FACTORIES_BY_OP_CODE},
+    ppu::PPU,
 };
 use error_stack::{bail, Result};
 use thiserror::Error;
@@ -119,7 +121,7 @@ pub struct CPU {
     pub pc: u16,
     pub flags: Flags,
     pub halt: bool,
-    mem: Vec<u8>,
+    pub bus: Bus,
 }
 
 impl CPU {
@@ -132,7 +134,7 @@ impl CPU {
             pc: 0,
             flags: Flags::default(),
             halt: false,
-            mem: vec![0; 0x10000],
+            bus: Bus::new(),
         }
     }
 
@@ -150,17 +152,11 @@ impl CPU {
         self.pc = self.get_mem16(0xFFFC);
     }
 
-    fn get_phisical_addr(&self, addr: u16) -> u16 {
-        match addr {
-            0x0000..=0x1FFF => addr & 0x07FF,
-            0x2000..=0x3FFF => addr & 0x2007,
-            _ => addr,
-        }
-    }
-
     pub fn set_mem(&mut self, addr: u16, value: u8) {
-        let i = self.get_phisical_addr(addr) as usize;
-        self.mem[i] = value;
+        if self.halt {
+            return;
+        }
+        self.bus.write(addr, value)
     }
 
     pub fn set_mem16(&mut self, addr: u16, value: u16) {
@@ -174,7 +170,7 @@ impl CPU {
         if self.halt {
             return 0xff;
         }
-        self.mem[self.get_phisical_addr(addr) as usize]
+        self.bus.read(addr)
     }
 
     pub fn get_mem16(&self, addr: u16) -> u16 {
@@ -194,16 +190,17 @@ impl CPU {
     pub fn load_program(&mut self, bytes: &[u8], start: u16) {
         // The memcopy below may overwrite the start address, which is expected.
         self.set_mem16(0xFFFC, start);
-        let i = start as usize;
-        self.mem[i..(i + bytes.len())].copy_from_slice(bytes);
+        for i in 0..bytes.len() {
+            self.bus.write(i as u16 + start, bytes[i])
+        }
         self.pc = start;
         self.sp = 0xff;
     }
 
     fn decode(&self) -> Result<Inst, NesError> {
-        let op = self.mem[self.pc as usize];
+        let op = self.bus.read(self.pc);
         if let Some(factory) = INST_FACTORIES_BY_OP_CODE.get(&op) {
-            return Ok(factory.make(&self.mem[((self.pc + 1) as usize)..]));
+            return Ok(factory.make(self.bus.get_byte_stream(self.pc + 1)));
         }
         bail!(NesError::DisassemblerFailure(format!(
             "Instruction not found. opcode={:02x} pc={:04x}",
@@ -237,7 +234,7 @@ impl CPU {
 
     pub fn push8(&mut self, value: u8) {
         let addr = self.get_stack_top_addr();
-        self.mem[addr as usize] = value;
+        self.bus.write(addr, value);
         self.sp -= 1;
     }
 
@@ -250,7 +247,7 @@ impl CPU {
 
     pub fn pop8(&mut self) -> u8 {
         self.sp += 1;
-        self.mem[self.get_stack_top_addr() as usize]
+        self.bus.read(self.get_stack_top_addr())
     }
 
     pub fn pop16(&mut self) -> u16 {
@@ -351,7 +348,7 @@ impl FromStr for CpuState {
                     .map_err(|_| CpuStateParseError::ParseIntError(b.to_string()))
             })
             .collect::<std::result::Result<Vec<u8>, _>>()?;
-        let inst = factory.make(&inst_bytes[1..len]);
+        let inst = factory.make(inst_bytes[1..len].iter().cloned());
         let inst_bytes = parts[..len as usize]
             .iter()
             .map(|b| {

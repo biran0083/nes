@@ -1,4 +1,6 @@
-pub mod tile;
+mod ppu;
+mod tile;
+pub use ppu::PPU;
 pub use tile::{Tile, TILE_HEIGHT, TILE_WIDTH};
 pub static SYSTEM_PALLETE: [(u8, u8, u8); 64] = [
     (0x80, 0x80, 0x80),
