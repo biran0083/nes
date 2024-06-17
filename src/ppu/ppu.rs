@@ -124,33 +124,6 @@ impl PpuRegisters {
     pub fn increment_address(&mut self) {
         self.addr.increment(self.get_ppu_addr_increment());
     }
-
-    pub fn get_ram_mapped_register(&self, addr: u16) -> u8 {
-        match addr {
-            0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
-                panic!("Cannot read write only PPU address {:x}", addr)
-            }
-            0x2002 => self.status,
-            0x2004 => self.oam_data,
-            0x2007 => self.data,
-            _ => panic!("Invalid PPU register address: {:#X}", addr),
-        }
-    }
-
-    pub fn set_ram_mapped_register(&mut self, addr: u16, value: u8) {
-        match addr {
-            0x2000 => self.control = value,
-            0x2001 => self.mask = value,
-            0x2002 => self.status = value,
-            0x2003 => self.oam_addr = value,
-            0x2004 => self.oam_data = value,
-            0x2005 => self.scroll = value,
-            0x2006 => self.addr.set(value),
-            0x2007 => self.data = value,
-            0x4014 => self.oam_dma = value,
-            _ => panic!("Invalid PPU register address: {:#X}", addr),
-        }
-    }
 }
 
 pub struct PPU {
@@ -231,11 +204,40 @@ impl PPU {
         }
     }
 
-    pub fn get_ram_mapped_register(&self, addr: u16) -> u8 {
-        self.registers.get_ram_mapped_register(addr)
+    pub fn write_data(&mut self, value: u8) {
+        let addr = self.registers.addr.get();
+        match addr {
+            0x0000..=0x1FFF => {
+                panic!("cannot write to chr rom")
+            }
+            0x2000..=0x2FFF => {
+                self.vram[self.mirror_vram_addr(addr) as usize] = value;
+            }
+            0x3000..=0x3EFF => panic!("unused address space"),
+            0x3F00..=0x3FFF => self.palette_table[(addr - 0x3f00) as usize] = value,
+            _ => panic!("Invalid PPU address: {:#X}", addr),
+        }
+        self.registers.increment_address();
+    }
+
+    pub fn get_ram_mapped_register(&mut self, addr: u16) -> u8 {
+        match addr {
+            0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
+                panic!("Cannot read write only PPU address {:x}", addr)
+            }
+            0x2002 => self.registers.status,
+            0x2004 => self.registers.oam_data,
+            0x2007 => self.read_data(),
+            _ => panic!("Invalid PPU read address: {:#X}", addr),
+        }
     }
 
     pub fn set_ram_mapped_register(&mut self, addr: u16, value: u8) {
-        self.registers.set_ram_mapped_register(addr, value);
+        match addr {
+            0x2000 => self.registers.control = value,
+            0x2006 => self.registers.addr.set(value),
+            0x2007 => self.write_data(value),
+            _ => panic!("Invalid PPU write address: {:#X}", addr),
+        }
     }
 }
