@@ -18,6 +18,21 @@ pub struct NesHeader {
     pub flags_10: u8,
 }
 
+pub enum Mirroring {
+    Horizontal,
+    Vertical,
+}
+
+impl NesFile {
+    pub fn mirroring(&self) -> Mirroring {
+        if self.header.flags_6 & 0b00000001 == 0 {
+            Mirroring::Horizontal
+        } else {
+            Mirroring::Vertical
+        }
+    }
+}
+
 pub fn read_nes_file(file_path: &str) -> Result<NesFile, std::io::Error> {
     let buffer = read_file(file_path)?;
     let mut b = buffer.as_slice();

@@ -1,15 +1,27 @@
-use crate::ppu::PPU;
+use crate::{nes_format::NesFile, ppu::PPU};
 
 pub struct Bus {
     ram: [u8; 0x10000],
     ppu: PPU,
+    prg_rom: Vec<u8>,
+}
+
+impl Default for Bus {
+    fn default() -> Self {
+        Bus {
+            ram: [0; 0x10000],
+            ppu: PPU::default(),
+            prg_rom: vec![],
+        }
+    }
 }
 
 impl Bus {
-    pub fn new() -> Bus {
+    pub fn new(f: NesFile) -> Bus {
         Bus {
             ram: [0; 0x10000],
-            ppu: PPU::new(),
+            ppu: PPU::new(f.chr_rom.clone(), f.mirroring()),
+            prg_rom: f.prg_rom,
         }
     }
 

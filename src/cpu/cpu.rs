@@ -4,6 +4,7 @@ use crate::{
     bus::Bus,
     error::NesError,
     instructions::{Inst, INST_FACTORIES_BY_OP_CODE},
+    nes_format::NesFile,
     ppu::PPU,
 };
 use error_stack::{bail, Result};
@@ -124,8 +125,8 @@ pub struct CPU {
     pub bus: Bus,
 }
 
-impl CPU {
-    pub fn new() -> Self {
+impl Default for CPU {
+    fn default() -> Self {
         Self {
             x: 0,
             y: 0,
@@ -134,7 +135,22 @@ impl CPU {
             pc: 0,
             flags: Flags::default(),
             halt: false,
-            bus: Bus::new(),
+            bus: Bus::default(),
+        }
+    }
+}
+
+impl CPU {
+    pub fn new(file: NesFile) -> Self {
+        Self {
+            x: 0,
+            y: 0,
+            a: 0,
+            sp: 0,
+            pc: 0,
+            flags: Flags::default(),
+            halt: false,
+            bus: Bus::new(file),
         }
     }
 

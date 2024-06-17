@@ -1,4 +1,3 @@
-
 use crate::cpu::CPU;
 
 use super::common::{Retriever, Setter};
@@ -8,12 +7,21 @@ pub struct TestRunner {
 }
 
 pub struct TestResult<'a> {
-    cpu: &'a CPU
+    cpu: &'a CPU,
 }
 
 impl<'a> TestResult<'a> {
-    pub fn verify<T: PartialEq + std::fmt::Debug>(&self, retriever: impl Retriever<T>, value: T) -> &Self {
-        assert_eq!(retriever.get(self.cpu), value, "Failed to verify {:?}", retriever);
+    pub fn verify<T: PartialEq + std::fmt::Debug>(
+        &self,
+        retriever: impl Retriever<T>,
+        value: T,
+    ) -> &Self {
+        assert_eq!(
+            retriever.get(self.cpu),
+            value,
+            "Failed to verify {:?}",
+            retriever
+        );
         self
     }
 }
@@ -21,7 +29,7 @@ impl<'a> TestResult<'a> {
 impl TestRunner {
     pub fn new() -> Self {
         TestRunner {
-            cpu: CPU::new(),
+            cpu: CPU::default(),
         }
     }
 
@@ -63,8 +71,6 @@ impl TestRunner {
 
     pub fn test(&mut self) -> TestResult {
         self.cpu.run_once().unwrap();
-        TestResult {
-            cpu: &self.cpu
-        }
+        TestResult { cpu: &self.cpu }
     }
 }

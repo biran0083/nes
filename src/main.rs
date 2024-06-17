@@ -123,7 +123,7 @@ fn run_code(game_code: Vec<u8>, start_addr: u16) -> Result<(), NesError> {
     let mut texture = creator
         .create_texture_target(PixelFormatEnum::RGB24, 32, 32)
         .unwrap();
-    let mut cpu = cpu::CPU::new();
+    let mut cpu = cpu::CPU::default();
     cpu.load_program(&game_code, start_addr);
     cpu.reset();
     let mut screen_state = [0 as u8; 32 * 3 * 32];
@@ -199,7 +199,7 @@ fn test_code(
     start_addr: u16,
     mut state_reader: CpuStateReader,
 ) -> Result<(), NesError> {
-    let mut cpu = cpu::CPU::new();
+    let mut cpu = cpu::CPU::default();
     cpu.load_program(&code, start_addr);
     cpu.reset();
     cpu.pc = start_addr;

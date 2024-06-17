@@ -93,6 +93,7 @@ pub fn load_operand_addr(mode: AddressingMode, cpu: &CPU, param: u16) -> u16 {
             )
         }
         AddressingMode::Indirect => {
+            println!("param: {:x}", param);
             let lo = cpu.get_mem(param) as u16;
             let hi = if param & 0xff == 0xff {
                 cpu.get_mem(param & 0xff00) as u16
