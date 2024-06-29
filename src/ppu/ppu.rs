@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use crate::nes_format::Mirroring;
 
 struct AddressRegister {
@@ -67,7 +69,7 @@ struct PpuRegisters {
     oam_addr: u8,
     oam_data: u8,
     scroll: u8,
-    addr: AddressRegister,
+    addr: RefCell<AddressRegister>,
     data: u8,
     oam_dma: u8,
 }
@@ -121,8 +123,10 @@ impl PpuRegisters {
         }
     }
 
-    pub fn increment_address(&mut self) {
-        self.addr.increment(self.get_ppu_addr_increment());
+    pub fn increment_address(&self) {
+        self.addr
+            .borrow_mut()
+            .increment(self.get_ppu_addr_increment());
     }
 }
 
@@ -132,7 +136,7 @@ pub struct PPU {
     palette_table: [u8; 32],
     vram: [u8; 2048],
     oam_data: [u8; 256],
-    read_buffer: u8,
+    read_buffer: RefCell<u8>,
     mirroring: Mirroring,
 }
 
@@ -144,7 +148,7 @@ impl Default for PPU {
             palette_table: [0; 32],
             vram: [0; 2048],
             oam_data: [0; 256],
-            read_buffer: 0,
+            read_buffer: 0.into(),
             mirroring: Mirroring::Horizontal,
         }
     }
@@ -158,7 +162,7 @@ impl PPU {
             palette_table: [0; 32],
             vram: [0; 2048],
             oam_data: [0; 256],
-            read_buffer: 0,
+            read_buffer: 0.into(),
             mirroring,
         }
     }
@@ -184,18 +188,18 @@ impl PPU {
         }
     }
 
-    pub fn read_data(&mut self) -> u8 {
-        let addr = self.registers.addr.get();
+    pub fn read_data(&self) -> u8 {
+        let addr = self.registers.addr.borrow().get();
         self.registers.increment_address();
         match addr {
             0x0000..=0x1FFF => {
-                let res = self.read_buffer;
-                self.read_buffer = self.chr_rom[addr as usize];
+                let res = *self.read_buffer.borrow();
+                *self.read_buffer.borrow_mut() = self.chr_rom[addr as usize];
                 res
             }
             0x2000..=0x2FFF => {
-                let res = self.read_buffer;
-                self.read_buffer = self.vram[self.mirror_vram_addr(addr) as usize];
+                let res = *self.read_buffer.borrow();
+                *self.read_buffer.borrow_mut() = self.vram[self.mirror_vram_addr(addr) as usize];
                 res
             }
             0x3000..=0x3EFF => panic!("unused address space"),
@@ -205,7 +209,7 @@ impl PPU {
     }
 
     pub fn write_data(&mut self, value: u8) {
-        let addr = self.registers.addr.get();
+        let addr = self.registers.addr.borrow().get();
         match addr {
             0x0000..=0x1FFF => {
                 panic!("cannot write to chr rom")
@@ -220,7 +224,7 @@ impl PPU {
         self.registers.increment_address();
     }
 
-    pub fn get_ram_mapped_register(&mut self, addr: u16) -> u8 {
+    pub fn get_ram_mapped_register(&self, addr: u16) -> u8 {
         match addr {
             0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
                 panic!("Cannot read write only PPU address {:x}", addr)
@@ -235,7 +239,7 @@ impl PPU {
     pub fn set_ram_mapped_register(&mut self, addr: u16, value: u8) {
         match addr {
             0x2000 => self.registers.control = value,
-            0x2006 => self.registers.addr.set(value),
+            0x2006 => self.registers.addr.borrow_mut().set(value),
             0x2007 => self.write_data(value),
             _ => panic!("Invalid PPU write address: {:#X}", addr),
         }
